@@ -3,3 +3,5 @@
 /vistas/assets/dist/img/logos_empresas/*
 !/vistas/assets/dist/img/logos_empresas/no_image.jpg
 !/vistas/assets/dist/img/logos_empresas/mi_logo_tutorialesphperu.png
+/vendor/
+
