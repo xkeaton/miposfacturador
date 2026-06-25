@@ -9,7 +9,7 @@ if (isset($_POST["accion"])) {
 
     switch ($_POST["accion"]) {
 
-        case 'obtener_categorias': 
+        case 'obtener_categorias':
 
             $response = CategoriasModelo::mdlObtenerCategorias();
             echo json_encode($response, JSON_UNESCAPED_UNICODE);
@@ -26,13 +26,19 @@ if (isset($_POST["accion"])) {
 
         case 'registrar_categoria':
 
-            $response = CategoriasModelo::mdlRegistrarCategoria($_POST['categoria']);
+            $response = CategoriasModelo::mdlRegistrarCategoria($_POST['descripcion']);
             echo json_encode($response, JSON_UNESCAPED_UNICODE);
             break;
 
-        case 'editar_categoria':
+        case 'actualizar_categoria':
 
-            $response = CategoriasModelo::mdlActualizarCategoria($_POST['idCategoria'], $_POST['categoria'], $_POST['medida']);
+            $response = CategoriasModelo::mdlActualizarCategoria($_POST['id_categoria'], $_POST['descripcion']);
+            echo json_encode($response, JSON_UNESCAPED_UNICODE);
+            break;
+
+        case 'cambiar_estado_categoria':
+
+            $response = CategoriasModelo::mdlCambiarEstadoCategoria($_POST['id_categoria'], $_POST['estado']);
             echo json_encode($response, JSON_UNESCAPED_UNICODE);
             break;
 

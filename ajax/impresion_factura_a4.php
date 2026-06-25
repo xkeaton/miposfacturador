@@ -1,3 +1,12 @@
+<?php
+
+require_once "../modelos/ventas.modelo.php";
+require_once "rutas.ajax.php";
+
+$ruta = Rutas::RutaProyecto();
+
+?>
+
 <html lang="en">
 
 <head>
@@ -11733,7 +11742,7 @@
 <body>
 
     <?php
-    $nombreImagen = "https://tutorialesphperu.com/pos/vistas/assets/dist/img/logos_empresas/" . $venta["logo"];
+    $nombreImagen = $ruta."vistas/assets/dist/img/logos_empresas/" . $venta["logo"];
     $imagenBase64 = "data:image/png;base64," . base64_encode(file_get_contents($nombreImagen));
     ?>
 
@@ -11755,10 +11764,10 @@
                     <table style="width: 100%;">
                         <tr>
                             <td style="font-size: 14px;border-color: #000;text-align: center;border-width: 5px;border-color: black;border-style: double;padding: 5px 15px;">
-                                <span>RUC: 20451245781</span> <br>
+                                <span>RUC: <?php echo $venta["ruc"] ?> </span> <br>
                                 <span>FACTURA</span> <br>
                                 <span>ELECTRÓNICA</span> <br>
-                                <span>F001-156</span>
+                                <span><?php echo $venta["serie"] . ' - ' . $venta["correlativo"] ?></span>
                             </td>
                         </tr>
                     </table>
@@ -11769,16 +11778,15 @@
 
     <!-- DATOS DEL CLIENTE -->
 
-    <table style="width: 100%;margin-top: 20px;">
+    <table style="width: 100%;margin-top: 20px;" class="rounded">
 
         <thead>
-            <tr style="font-size: 14px;text-align: left;background-color: #34495e; color: white;font-weight: bold;">
+            <tr style="font-size: 14px;text-align: left;background-color: #17202a; color: white;font-weight: bold;">
                 <th>
                     <span style="margin-left: 10px;">DATOS DEL CLIENTE</span>
                 </th>
             </tr>
         </thead>
-
 
         <body>
             <tr style="border-width: 1px;border-color: black; ">
@@ -11787,18 +11795,20 @@
 
                         <body>
 
-                            <tr>
+                            <tr class="rounded">
                                 <td style="width: 30%;">
                                     <span style="margin-left: 10px;font-size: 13px;font-weight: bold;">CLIENTE:</span> <br>
                                     <span style="margin-left: 10px;font-size: 13px;font-weight: bold;">RUC:</span> <br>
                                     <span style="margin-left: 10px;font-size: 13px;font-weight: bold;">DIRECCIÓN:</span> <br>
-                                    <span style="margin-left: 10px;font-size: 13px;font-weight: bold;">FECHA DE EMISIÓN:</span>
+                                    <span style="margin-left: 10px;font-size: 13px;font-weight: bold;">FECHA DE EMISIÓN:</span><br>
+                                    <span style="margin-left: 10px;font-size: 13px;font-weight: bold;">FORMA DE PAGO:</span>
                                 </td>
                                 <td style="width: 70%;">
-                                    <span style="font-size: 13px;">COMERCIAL FERRETERA PRISMA S.A.C.</span><br>
-                                    <span style="font-size: 13px;">20525994741</span><br>
-                                    <span style="font-size: 13px;">AVENIDA ANGAMOS 154 - SURQUILLO</span><br>
-                                    <span style="font-size: 13px;">2023-12-31</span>
+                                    <span style="font-size: 13px;"><?php echo $venta["nombres_apellidos_razon_social"] ?> </span><br>
+                                    <span style="font-size: 13px;"><?php echo $venta["nro_documento"] ?></span><br>
+                                    <span style="font-size: 13px;"><?php echo $venta["direccion"] ?></span><br>
+                                    <span style="font-size: 13px;"><?php echo $venta["fecha_emision"] ?></span><br>
+                                    <span style="font-size: 13px;"><?php echo $venta["forma_pago"] ?></span>
                                 </td>
                             </tr>
 
@@ -11820,21 +11830,21 @@
     <table class="table">
         <thead>
             <tr>
-                <th style="width:20%;font-size: 14px;border: 1px solid #34495e;text-align: center;background-color: #34495e; color: white;font-weight: bold;">CÓDIGO</th>
-                <th style="width:45%;font-size: 14px;border: 1px solid #34495e;text-align: center;background-color: #34495e; color: white;font-weight: bold;">DESCRIPCIÓN</th>
-                <th style="width:10%;font-size: 14px;border: 1px solid #34495e;text-align: center;background-color: #34495e; color: white;font-weight: bold;">CANT.</th>
-                <td style="width:12%;font-size: 14px;border: 1px solid #34495e;text-align: center;background-color: #34495e; color: white;font-weight: bold;">P. UNIT.</td>
-                <td style="width:13%;font-size: 14px;border: 1px solid #34495e;text-align: center;background-color: #34495e; color: white;font-weight: bold;">IMPORTE</td>
+                <th style="width:20%;font-size: 14px;border: 1px solid #17202a;text-align: center;background-color: #17202a; color: white;font-weight: bold;">CÓDIGO</th>
+                <th style="width:45%;font-size: 14px;border: 1px solid #17202a;text-align: center;background-color: #17202a; color: white;font-weight: bold;">DESCRIPCIÓN</th>
+                <th style="width:10%;font-size: 14px;border: 1px solid #17202a;text-align: center;background-color: #17202a; color: white;font-weight: bold;">CANT.</th>
+                <td style="width:12%;font-size: 14px;border: 1px solid #17202a;text-align: center;background-color: #17202a; color: white;font-weight: bold;">P. UNIT.</td>
+                <td style="width:13%;font-size: 14px;border: 1px solid #17202a;text-align: center;background-color: #17202a; color: white;font-weight: bold;">IMPORTE</td>
             </tr>
         </thead>
         <tbody>
-            <?php for ($i = 0; $i < 5; $i++) : ?>
+            <?php for ($i = 0; $i < count($detalle_venta); $i++) : ?>
                 <tr>
-                    <td style="width:20%;font-size: 12px;border: 1px solid #34495e;text-align: center;">68464564564654</td>
-                    <td style="width:45%;font-size: 12px;border: 1px solid #34495e;text-align: center;">ACEITE COSTEÑO 1L</td>
-                    <td style="width:10%;font-size: 12px;border: 1px solid #34495e;text-align: center;">1</td>
-                    <td style="width:12%;font-size: 12px;border: 1px solid #34495e;text-align: center;">S/ 5.00</td>
-                    <td style="width:13%;font-size: 12px;border: 1px solid #34495e;text-align: center;">S/ 5.00</td>
+                    <td style="width:20%;font-size: 12px;border: 1px solid #17202a;text-align: center;"><?php echo $detalle_venta[$i]["codigo_producto"]; ?></td>
+                    <td style="width:45%;font-size: 12px;border: 1px solid #17202a;text-align: center;"><?php echo $detalle_venta[$i]["descripcion"]; ?></td>
+                    <td style="width:10%;font-size: 12px;border: 1px solid #17202a;text-align: center;"><?php echo $detalle_venta[$i]["cantidad"]; ?></td>
+                    <td style="width:12%;font-size: 12px;border: 1px solid #17202a;text-align: center;"><?php echo $detalle_venta[$i]["precio_unitario"]; ?></td>
+                    <td style="width:13%;font-size: 12px;border: 1px solid #17202a;text-align: center;"><?php echo $detalle_venta[$i]["importe_total"]; ?></td>
                 </tr>
 
             <?php endfor; ?>
@@ -11842,14 +11852,13 @@
         </tbody>
     </table>
 
-    <br><br>
-
     <?php
 
     $imagenQRBase64 = "data:image/png;base64," . base64_encode(file_get_contents($ruta_qr));
 
     ?>
 
+    <!-- IMPORTES DE LA VENTA -->
     <table style="width: 100%;">
 
         <body>
@@ -11857,55 +11866,55 @@
             <tr>
                 <td style="width: 30%;"><img src="<?php echo $imagenQRBase64 ?>" width="140" alt=""></td>
                 <td style="width: 70%;">
-                    <table  style="width: 100%;">
+                    <table style="width: 100%;">
 
                         <body>
                             <tr>
-                                <td style="width: 80%;text-align: right; border: 1px solid #34495e;font-size: 12px;">
+                                <td style="width: 80%;text-align: right; border: 1px solid #17202a;font-size: 12px;">
                                     <span style="margin-right: 15px;">Operaciones Gravadas</span>
                                 </td>
-                                <td style="width: 20%;;text-align: right; border: 1px solid #34495e;font-size: 12px;">
-                                    <span style="margin-right: 15px;">S. 100</span>
+                                <td style="width: 20%;;text-align: right; border: 1px solid #17202a;font-size: 12px;">
+                                    <span style="margin-right: 15px;"><?php echo $venta["ope_gravada"] ?></span>
                                 </td>
                             </tr>
                             <tr>
-                                <td style="width: 80%;text-align: right; border: 1px solid #34495e;font-size: 12px;">
+                                <td style="width: 80%;text-align: right; border: 1px solid #17202a;font-size: 12px;">
                                     <span style="margin-right: 15px;">Operaciones Inafectas</span>
                                 </td>
-                                <td style="width: 20%;;text-align: right; border: 1px solid #34495e;font-size: 12px;">
-                                    <span style="margin-right: 15px;">S. 100</span>
+                                <td style="width: 20%;;text-align: right; border: 1px solid #17202a;font-size: 12px;">
+                                    <span style="margin-right: 15px;"><?php echo $venta["ope_inafecta"] ?></span>
                                 </td>
                             </tr>
                             <tr>
-                                <td style="width: 80%;text-align: right; border: 1px solid #34495e;font-size: 12px;">
+                                <td style="width: 80%;text-align: right; border: 1px solid #17202a;font-size: 12px;">
                                     <span style="margin-right: 15px;">Operaciones Exoneradas</span>
                                 </td>
-                                <td style="width: 20%;;text-align: right; border: 1px solid #34495e;font-size: 12px;">
-                                    <span style="margin-right: 15px;">S. 100</span>
+                                <td style="width: 20%;;text-align: right; border: 1px solid #17202a;font-size: 12px;">
+                                    <span style="margin-right: 15px;"><?php echo $venta["ope_exonerada"] ?></span>
                                 </td>
                             </tr>
                             <tr>
-                                <td style="width: 80%;text-align: right; border: 1px solid #34495e;font-size: 12px;">
+                                <td style="width: 80%;text-align: right; border: 1px solid #17202a;font-size: 12px;">
                                     <span style="margin-right: 15px;">Subtotal</span>
                                 </td>
-                                <td style="width: 20%;;text-align: right; border: 1px solid #34495e;font-size: 12px;">
-                                    <span style="margin-right: 15px;">S. 100</span>
+                                <td style="width: 20%;;text-align: right; border: 1px solid #17202a;font-size: 12px;">
+                                    <span style="margin-right: 15px;"><?php echo $venta["subtotal"] ?></span>
                                 </td>
                             </tr>
                             <tr>
-                                <td style="width: 80%;text-align: right; border: 1px solid #34495e;font-size: 12px;">
+                                <td style="width: 80%;text-align: right; border: 1px solid #17202a;font-size: 12px;">
                                     <span style="margin-right: 15px;">Total IGV</span>
                                 </td>
-                                <td style="width: 20%;;text-align: right; border: 1px solid #34495e;font-size: 12px;">
-                                    <span style="margin-right: 15px;">S. 100</span>
+                                <td style="width: 20%;;text-align: right; border: 1px solid #17202a;font-size: 12px;">
+                                    <span style="margin-right: 15px;"><?php echo $venta["total_igv"] ?></span>
                                 </td>
                             </tr>
                             <tr>
-                                <td style="width: 80%;text-align: right; border: 1px solid #34495e;font-size: 12px;">
+                                <td style="width: 80%;text-align: right; border: 1px solid #17202a;font-size: 12px;">
                                     <span style="margin-right: 15px;">Total Venta</span>
                                 </td>
-                                <td style="width: 20%;;text-align: right; border: 1px solid #34495e;font-size: 12px;">
-                                    <span style="margin-right: 15px;">S. 100</span>
+                                <td style="width: 20%;;text-align: right; border: 1px solid #17202a;font-size: 12px;">
+                                    <span style="margin-right: 15px;"><?php echo $venta["importe_total"] ?></span>
                                 </td>
                             </tr>
                         </body>
@@ -11914,7 +11923,38 @@
             </tr>
 
         </body>
-    </table>
+    </table>    
+
+    <!-- CUOTAS EN CASO SEA FACTURA AL CREDITO -->
+
+    <?php if ($venta["forma_pago"] == "Credito") : ?>
+
+        <p class="text-center mt-4 w-100 fw-bold">CALENDARIO DE PAGOS</p>
+
+        <!-- DETALLA DE LA VENTA -->
+        <table class="table mt-2">
+            <thead>
+                <tr>
+                    <th style="width:20%;font-size: 14px;border: 1px solid #17202a;text-align: center;background-color: #17202a; color: white;font-weight: bold;">NRO CUOTA</th>
+                    <th style="width:40%;font-size: 14px;border: 1px solid #17202a;text-align: center;background-color: #17202a; color: white;font-weight: bold;">IMPORTE</th>
+                    <th style="width:20%;font-size: 14px;border: 1px solid #17202a;text-align: center;background-color: #17202a; color: white;font-weight: bold;">FEC VENC.</th>
+                </tr>
+            </thead>
+            <tbody>
+
+                <?php for ($i = 0; $i < count($cuotas); $i++) : ?>
+                    <tr>
+                        <td style="width:20%;font-size: 12px;border: 1px solid #17202a;text-align: center;"><?php echo $cuotas[$i]["cuota"]; ?></td>
+                        <td style="width:40%;font-size: 12px;border: 1px solid #17202a;text-align: center;"><?php echo $cuotas[$i]["importe"]; ?></td>
+                        <td style="width:20%;font-size: 12px;border: 1px solid #17202a;text-align: center;"><?php echo $cuotas[$i]["fecha_vencimiento"]; ?></td>
+                    </tr>
+
+                <?php endfor; ?>
+
+            </tbody>
+        </table>
+
+    <?php endif; ?>
 
 </body>
 

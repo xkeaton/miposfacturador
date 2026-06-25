@@ -93,7 +93,7 @@ $(function () {
     datasets: [
       {
         data: [700, 500, 400, 600, 300, 100],
-        backgroundColor: ['#f56954', '#00a65a', '#f39c12', '#00c0ef', '#3c8dbc', '#d2d6de']
+        backgroundColor: ['#f56954', '#00a65a', '#17202a', '#00c0ef', '#3c8dbc', '#d2d6de']
       }
     ]
   }

@@ -33,7 +33,7 @@ if (isset($_POST["accion"])) {
 
             break;
 
-        case 'obtener_perfiles': 
+        case 'obtener_perfiles':
 
             $response = PerfilesModelo::mdlObtenerPerfiles($_POST);
 
@@ -41,13 +41,22 @@ if (isset($_POST["accion"])) {
 
             break;
 
-        case 'listar_perfiles_select': 
+        case 'obtener_perfil_x_id':
 
-                $response = PerfilesModelo::mdlObtenerListarPerfiles();
-    
-                echo json_encode($response, JSON_UNESCAPED_UNICODE);
-    
-                break;
+            $response = PerfilesModelo::mdlObtenerPerfilPorId($_POST["id_perfil"]);
+
+            echo json_encode($response, JSON_UNESCAPED_UNICODE);
+
+            break;
+
+
+        case 'listar_perfiles_select':
+
+            $response = PerfilesModelo::mdlObtenerListarPerfiles();
+
+            echo json_encode($response, JSON_UNESCAPED_UNICODE);
+
+            break;
 
         case 'registrar_perfil':
 
@@ -56,6 +65,16 @@ if (isset($_POST["accion"])) {
             parse_str($_POST['datos_perfil'], $formulario_perfil);
 
             $response = PerfilesModelo::mdlRegistrarPerfil($formulario_perfil);
+            echo json_encode($response, JSON_UNESCAPED_UNICODE);
+            break;
+
+        case 'actualizar_perfil':
+
+            //Datos del formulario
+            $formulario_perfil = [];
+            parse_str($_POST['datos_perfil'], $formulario_perfil);
+
+            $response = PerfilesModelo::mdlActualizarPerfil($_POST["id_perfil"], $formulario_perfil);
             echo json_encode($response, JSON_UNESCAPED_UNICODE);
             break;
     }

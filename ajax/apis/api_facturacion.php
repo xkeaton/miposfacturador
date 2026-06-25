@@ -13,6 +13,7 @@ if ($method == "OPTIONS") {
 use ZipStream\Exception;
 
 require_once("signature.php");
+require_once "../modelos/configuraciones.modelo.php";
 
 class ApiFacturacion
 {
@@ -143,7 +144,7 @@ class ApiFacturacion
                     <cac:PaymentTerms>
                           <cbc:ID>FormaPago</cbc:ID>
                           <cbc:PaymentMeansID>' . $venta['forma_pago'] . '</cbc:PaymentMeansID>
-                          <cbc:Amount currencyID="' . $venta['moneda'] . '">' . $venta['monto_credito'] . '</cbc:Amount>
+                          <cbc:Amount currencyID="' . $venta['moneda'] . '">' . round($venta['monto_credito'],2) . '</cbc:Amount>
                     </cac:PaymentTerms>';
 
         for ($i = 0; $i < count($venta["cuotas"]); $i++) {
@@ -151,7 +152,7 @@ class ApiFacturacion
             $xml .= '<cac:PaymentTerms>
                         <cbc:ID>FormaPago</cbc:ID>
                         <cbc:PaymentMeansID>Cuota' . str_pad($venta["cuotas"][$i]["cuota"], 3, "0", STR_PAD_LEFT) . '</cbc:PaymentMeansID>
-                        <cbc:Amount currencyID="PEN">' . $venta["cuotas"][$i]["importe"] . '</cbc:Amount>
+                        <cbc:Amount currencyID="PEN">' . round($venta["cuotas"][$i]["importe"],2) . '</cbc:Amount>
                         <cbc:PaymentDueDate>' . $venta["cuotas"][$i]["vencimiento"] . '</cbc:PaymentDueDate>
                     </cac:PaymentTerms>';
         }
@@ -168,10 +169,10 @@ class ApiFacturacion
         //TOTAL DE IMPUESTOS:
         $xml .= '
                     <cac:TaxTotal>
-                        <cbc:TaxAmount currencyID="' . $venta['moneda'] . '">' . number_format($venta['total_impuestos'], 2) . '</cbc:TaxAmount>
+                        <cbc:TaxAmount currencyID="' . $venta['moneda'] . '">' . round($venta['total_impuestos'], 2) . '</cbc:TaxAmount>
                         <cac:TaxSubtotal>
-                            <cbc:TaxableAmount currencyID="' . $venta['moneda'] . '">' . number_format($venta['total_operaciones_gravadas'], 2) . '</cbc:TaxableAmount>
-                            <cbc:TaxAmount currencyID="' . $venta['moneda'] . '">' . number_format($venta['total_igv'], 2) . '</cbc:TaxAmount>
+                            <cbc:TaxableAmount currencyID="' . $venta['moneda'] . '">' . round($venta['total_operaciones_gravadas'], 2) . '</cbc:TaxableAmount>
+                            <cbc:TaxAmount currencyID="' . $venta['moneda'] . '">' . round($venta['total_igv'], 2) . '</cbc:TaxAmount>
                             <cac:TaxCategory>
                                 <cbc:ID schemeID="UN/ECE 5305" schemeName="Tax Category Identifier" schemeAgencyName="United Nations Economic Commission for Europe">S</cbc:ID>
                                 <cac:TaxScheme>
@@ -184,7 +185,7 @@ class ApiFacturacion
 
         if ($venta['total_operaciones_exoneradas'] > 0) {
             $xml .= '<cac:TaxSubtotal>
-                            <cbc:TaxableAmount currencyID="' . $venta['moneda'] . '">' .  number_format($venta['total_operaciones_exoneradas'], 2) . '</cbc:TaxableAmount>
+                            <cbc:TaxableAmount currencyID="' . $venta['moneda'] . '">' .  round($venta['total_operaciones_exoneradas'], 2) . '</cbc:TaxableAmount>
                             <cbc:TaxAmount currencyID="' . $venta['moneda'] . '">0.00</cbc:TaxAmount>
                             <cac:TaxCategory>
                                 <cbc:ID schemeID="UN/ECE 5305" schemeName="Tax Category Identifier" schemeAgencyName="United Nations Economic Commission for Europe">E</cbc:ID>
@@ -199,7 +200,7 @@ class ApiFacturacion
 
         if ($venta['total_operaciones_inafectas'] > 0) {
             $xml .= '<cac:TaxSubtotal>
-                            <cbc:TaxableAmount currencyID="' . $venta['moneda'] . '">' . number_format($venta['total_operaciones_inafectas'], 2) . '</cbc:TaxableAmount>
+                            <cbc:TaxableAmount currencyID="' . $venta['moneda'] . '">' . round($venta['total_operaciones_inafectas'], 2) . '</cbc:TaxableAmount>
                             <cbc:TaxAmount currencyID="' . $venta['moneda'] . '">0.00</cbc:TaxAmount>
                             <cac:TaxCategory>
                                 <cbc:ID schemeID="UN/ECE 5305" schemeName="Tax Category Identifier" schemeAgencyName="United Nations Economic Commission for Europe">O</cbc:ID>
@@ -215,9 +216,9 @@ class ApiFacturacion
 
         $xml .=     '</cac:TaxTotal>
                     <cac:LegalMonetaryTotal>
-                        <cbc:LineExtensionAmount currencyID="' . $venta['moneda'] . '">' . number_format($venta['total_sin_impuestos'], 2) . '</cbc:LineExtensionAmount>
-                        <cbc:TaxInclusiveAmount currencyID="' . $venta['moneda'] . '">' . number_format($venta['total_con_impuestos'], 2) . '</cbc:TaxInclusiveAmount>
-                        <cbc:PayableAmount currencyID="' . $venta['moneda'] . '">' . number_format($venta['total_a_pagar'], 2) . '</cbc:PayableAmount>
+                        <cbc:LineExtensionAmount currencyID="' . $venta['moneda'] . '">' . round($venta['total_sin_impuestos'], 2) . '</cbc:LineExtensionAmount>
+                        <cbc:TaxInclusiveAmount currencyID="' . $venta['moneda'] . '">' . round($venta['total_con_impuestos'], 2) . '</cbc:TaxInclusiveAmount>
+                        <cbc:PayableAmount currencyID="' . $venta['moneda'] . '">' . round($venta['total_a_pagar'], 2) . '</cbc:PayableAmount>
                     </cac:LegalMonetaryTotal>';
 
         // INICIO INVOICE LINE
@@ -226,18 +227,18 @@ class ApiFacturacion
             $xml .= '<cac:InvoiceLine>
                             <cbc:ID>' . $producto['item'] . '</cbc:ID>
                             <cbc:InvoicedQuantity unitCode="' . $producto['unidad'] . '" unitCodeListID="UN/ECE rec 20" unitCodeListAgencyName="United Nations Economic Commission for Europe">' . $producto['cantidad'] . '</cbc:InvoicedQuantity>
-                            <cbc:LineExtensionAmount currencyID="' . $venta['moneda'] . '">' . $producto['valor_total'] . '</cbc:LineExtensionAmount>
+                            <cbc:LineExtensionAmount currencyID="' . $venta['moneda'] . '">' . round($producto['valor_total'],2) . '</cbc:LineExtensionAmount>
                             <cac:PricingReference>
                                 <cac:AlternativeConditionPrice>
-                                    <cbc:PriceAmount currencyID="' . $venta['moneda'] . '">' . number_format($producto['precio_unitario'], 2) . '</cbc:PriceAmount>
+                                    <cbc:PriceAmount currencyID="' . $venta['moneda'] . '">' . round($producto['precio_unitario'], 2) . '</cbc:PriceAmount>
                                     <cbc:PriceTypeCode listName="Tipo de Precio" listAgencyName="PE:SUNAT" listURI="urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo16">01</cbc:PriceTypeCode>
                                 </cac:AlternativeConditionPrice>
                             </cac:PricingReference>
                             <cac:TaxTotal>
-                                <cbc:TaxAmount currencyID="' . $venta['moneda'] . '">' . number_format($producto['igv'], 2) . '</cbc:TaxAmount>
+                                <cbc:TaxAmount currencyID="' . $venta['moneda'] . '">' . round($producto['igv'], 2) . '</cbc:TaxAmount>
                                 <cac:TaxSubtotal>
-                                    <cbc:TaxableAmount currencyID="' . $venta['moneda'] . '">' . $producto['valor_total'] . '</cbc:TaxableAmount>
-                                    <cbc:TaxAmount currencyID="' . $venta['moneda'] . '">' . number_format($producto['igv'], 2) . '</cbc:TaxAmount>
+                                    <cbc:TaxableAmount currencyID="' . $venta['moneda'] . '">' . round($producto['valor_total'],2) . '</cbc:TaxableAmount>
+                                    <cbc:TaxAmount currencyID="' . $venta['moneda'] . '">' . round($producto['igv'], 2) . '</cbc:TaxAmount>
                                     <cac:TaxCategory>
                                     <cbc:ID schemeID="UN/ECE 5305" schemeName="Tax Category Identifier" schemeAgencyName="United Nations Economic Commission for Europe">' . $producto['codigos'][0] . '</cbc:ID>
                                     <cbc:Percent>' . $producto['porcentaje_igv'] . '</cbc:Percent>
@@ -261,7 +262,7 @@ class ApiFacturacion
                                 </cac:CommodityClassification>
                             </cac:Item>
                             <cac:Price>
-                                <cbc:PriceAmount currencyID="' . $venta['moneda'] . '">' . $producto['valor_unitario'] . '</cbc:PriceAmount>
+                                <cbc:PriceAmount currencyID="' . $venta['moneda'] . '">' . round($producto['valor_unitario'], 4) . '</cbc:PriceAmount>
                             </cac:Price>
                         </cac:InvoiceLine>';
         }
@@ -273,7 +274,7 @@ class ApiFacturacion
         return "generado xml";
     }
 
-    function Genera_XML_Nota_Credito($path_xml, $name_xml, $datos_emisor, $datos_cliente, $venta, $detalle_venta = null)
+    static function Genera_XML_Nota_Credito($path_xml, $name_xml, $datos_emisor, $datos_cliente, $venta, $detalle_venta = null)
     {
 
         $doc = new DOMDocument();
@@ -308,7 +309,8 @@ class ApiFacturacion
 
         //DATOS DEL FIRMANTE:
         $xml .= '<cac:Signature>
-                    <cbc:ID>' .  $venta['serie'] . '-' . $venta['correlativo'] . '</cbc:ID>
+                    <cbc:ID>' . $datos_emisor['ruc'] . '</cbc:ID>
+                    <cbc:Note><![CDATA[' . $datos_emisor['nombre_comercial'] . ']]></cbc:Note>
                     <cac:SignatoryParty>
                     <cac:PartyIdentification>
                         <cbc:ID>' . $datos_emisor['ruc'] . '</cbc:ID>
@@ -326,61 +328,60 @@ class ApiFacturacion
 
         //DATOS DE LA EMPRESA EMISORA:
         $xml .= '<cac:AccountingSupplierParty>
-                            <cac:Party>
-                            <cac:PartyIdentification>
-                                <cbc:ID schemeID="' . $datos_emisor['tipo_documento'] . '">' . $datos_emisor['ruc'] . '</cbc:ID>
-                            </cac:PartyIdentification>
-                            <cac:PartyName>
-                                <cbc:Name><![CDATA[' . $datos_emisor['razon_social'] . ']]></cbc:Name>
-                            </cac:PartyName>
-                            <cac:PartyLegalEntity>
-                                <cbc:RegistrationName><![CDATA[' . $datos_emisor['razon_social'] . ']]></cbc:RegistrationName>
-                                <cac:RegistrationAddress>
-                                    <cbc:ID>' . $datos_emisor['ubigeo'] . '</cbc:ID>
-                                    <cbc:AddressTypeCode>0000</cbc:AddressTypeCode>
-                                    <cbc:CitySubdivisionName>NONE</cbc:CitySubdivisionName>
-                                    <cbc:CityName>' . $datos_emisor['provincia'] . '</cbc:CityName>
-                                    <cbc:CountrySubentity>' . $datos_emisor['departamento'] . '</cbc:CountrySubentity>
-                                    <cbc:District>' . $datos_emisor['distrito'] . '</cbc:District>
-                                    <cac:AddressLine>
-                                        <cbc:Line><![CDATA[' . $datos_emisor['direccion'] . ']]></cbc:Line>
-                                    </cac:AddressLine>
-                                    <cac:Country>
-                                        <cbc:IdentificationCode>PE</cbc:IdentificationCode>
-                                    </cac:Country>
-                                </cac:RegistrationAddress>
-                            </cac:PartyLegalEntity>
-                            </cac:Party>
-                        </cac:AccountingSupplierParty>';
+                    <cac:Party>
+                    <cac:PartyIdentification>
+                        <cbc:ID schemeID="' . $datos_emisor['tipo_documento'] . '">' . $datos_emisor['ruc'] . '</cbc:ID>
+                    </cac:PartyIdentification>
+                    <cac:PartyName>
+                        <cbc:Name><![CDATA[' . $datos_emisor['nombre_comercial'] . ']]></cbc:Name>
+                    </cac:PartyName>
+                    <cac:PartyLegalEntity>
+                        <cbc:RegistrationName><![CDATA[' . $datos_emisor['razon_social'] . ']]></cbc:RegistrationName>
+                        <cac:RegistrationAddress>
+                            <cbc:ID>' . $datos_emisor['ubigeo'] . '</cbc:ID>
+                            <cbc:AddressTypeCode>0000</cbc:AddressTypeCode>
+                            <cbc:CitySubdivisionName>NONE</cbc:CitySubdivisionName>
+                            <cbc:CityName>' . $datos_emisor['provincia'] . '</cbc:CityName>
+                            <cbc:CountrySubentity>' . $datos_emisor['departamento'] . '</cbc:CountrySubentity>
+                            <cbc:District>' . $datos_emisor['distrito'] . '</cbc:District>
+                            <cac:AddressLine>
+                                <cbc:Line><![CDATA[' . $datos_emisor['direccion'] . ']]></cbc:Line>
+                            </cac:AddressLine>
+                            <cac:Country>
+                                <cbc:IdentificationCode>PE</cbc:IdentificationCode>
+                            </cac:Country>
+                        </cac:RegistrationAddress>
+                    </cac:PartyLegalEntity>
+                    </cac:Party>
+                </cac:AccountingSupplierParty>';
 
         // DATOS DEL CLIENTE
         $xml .= '<cac:AccountingCustomerParty>
-                            <cac:Party>
-                            <cac:PartyIdentification>
-                                <cbc:ID schemeID="' . $datos_cliente['tipo_documento'] . '">' . $datos_cliente['nro_documento'] . '</cbc:ID>
-                            </cac:PartyIdentification>
-                            <cac:PartyLegalEntity>
-                                <cbc:RegistrationName><![CDATA[' . $datos_cliente['nombres_apellidos_razon_social'] . ']]></cbc:RegistrationName>
-                                <cac:RegistrationAddress>
-                                    <cac:AddressLine>
-                                        <cbc:Line><![CDATA[' . $datos_cliente['direccion'] . ']]></cbc:Line>
-                                    </cac:AddressLine>
-                                    <cac:Country>
-                                        <cbc:IdentificationCode>PE</cbc:IdentificationCode>
-                                    </cac:Country>
-                                </cac:RegistrationAddress>
-                            </cac:PartyLegalEntity>
-                            </cac:Party>
-                        </cac:AccountingCustomerParty>';
+                    <cac:Party>
+                    <cac:PartyIdentification>
+                        <cbc:ID schemeID="' . $datos_cliente['tipo_documento'] . '">' . $datos_cliente['nro_documento'] . '</cbc:ID>
+                    </cac:PartyIdentification>
+                    <cac:PartyLegalEntity>
+                        <cbc:RegistrationName><![CDATA[' . $datos_cliente['nombres_apellidos_razon_social'] . ']]></cbc:RegistrationName>
+                        <cac:RegistrationAddress>
+                            <cac:AddressLine>
+                                <cbc:Line><![CDATA[' . $datos_cliente['direccion'] . ']]></cbc:Line>
+                            </cac:AddressLine>
+                            <cac:Country>
+                                <cbc:IdentificationCode>PE</cbc:IdentificationCode>
+                            </cac:Country>
+                        </cac:RegistrationAddress>
+                    </cac:PartyLegalEntity>
+                    </cac:Party>
+                </cac:AccountingCustomerParty>';
 
         //TOTAL DE IMPUESTOS:
-
         if ($venta['total_operaciones_gravadas'] > 0) {
             $xml .= '<cac:TaxTotal>
-                    <cbc:TaxAmount currencyID="' . $venta['moneda'] . '">' . number_format($venta['total_impuestos'], 2) . '</cbc:TaxAmount>
+                    <cbc:TaxAmount currencyID="' . $venta['moneda'] . '">' . round($venta['total_impuestos'], 2) . '</cbc:TaxAmount>
                     <cac:TaxSubtotal>
-                    <cbc:TaxableAmount currencyID="' . $venta['moneda'] . '">' . number_format($venta['total_operaciones_gravadas'], 2) . '</cbc:TaxableAmount>
-                    <cbc:TaxAmount currencyID="' . $venta['moneda'] . '">' . number_format($venta['total_igv'], 2) . '</cbc:TaxAmount>
+                    <cbc:TaxableAmount currencyID="' . $venta['moneda'] . '">' . round($venta['total_operaciones_gravadas'], 2) . '</cbc:TaxableAmount>
+                    <cbc:TaxAmount currencyID="' . $venta['moneda'] . '">' . round($venta['total_igv'], 2) . '</cbc:TaxAmount>
                     <cac:TaxCategory>
                         <cac:TaxScheme>
                             <cbc:ID>1000</cbc:ID>
@@ -393,7 +394,7 @@ class ApiFacturacion
 
         if ($venta['total_operaciones_exoneradas'] > 0) {
             $xml .= '<cac:TaxSubtotal>
-                        <cbc:TaxableAmount currencyID="' . $venta['moneda'] . '">' . number_format($venta['total_operaciones_exoneradas'], 2) . '</cbc:TaxableAmount>
+                        <cbc:TaxableAmount currencyID="' . $venta['moneda'] . '">' . round($venta['total_operaciones_exoneradas'], 2) . '</cbc:TaxableAmount>
                         <cbc:TaxAmount currencyID="' . $venta['moneda'] . '">0.00</cbc:TaxAmount>
                         <cac:TaxCategory>
                             <cbc:ID schemeID="UN/ECE 5305" schemeName="Tax Category Identifier" schemeAgencyName="United Nations Economic Commission for Europe">E</cbc:ID>
@@ -408,7 +409,7 @@ class ApiFacturacion
 
         if ($venta['total_operaciones_inafectas'] > 0) {
             $xml .= '<cac:TaxSubtotal>
-                        <cbc:TaxableAmount currencyID="' . $venta['moneda'] . '">' . number_format($venta['total_operaciones_inafectas'], 2) . '</cbc:TaxableAmount>
+                        <cbc:TaxableAmount currencyID="' . $venta['moneda'] . '">' . round($venta['total_operaciones_inafectas'], 2) . '</cbc:TaxableAmount>
                         <cbc:TaxAmount currencyID="' . $venta['moneda'] . '">0.00</cbc:TaxAmount>
                         <cac:TaxCategory>
                             <cbc:ID schemeID="UN/ECE 5305" schemeName="Tax Category Identifier" schemeAgencyName="United Nations Economic Commission for Europe">E</cbc:ID>
@@ -434,15 +435,15 @@ class ApiFacturacion
                     <cbc:LineExtensionAmount currencyID="' . $venta['moneda'] . '">' . $producto['valor_total'] . '</cbc:LineExtensionAmount>
                     <cac:PricingReference>
                         <cac:AlternativeConditionPrice>
-                            <cbc:PriceAmount currencyID="' . $venta['moneda'] . '">' . number_format($producto['precio_unitario'], 2) . '</cbc:PriceAmount>
+                            <cbc:PriceAmount currencyID="' . $venta['moneda'] . '">' . round($producto['precio_unitario'], 2) . '</cbc:PriceAmount>
                             <cbc:PriceTypeCode>01</cbc:PriceTypeCode>
                         </cac:AlternativeConditionPrice>
                     </cac:PricingReference>
                     <cac:TaxTotal>
-                        <cbc:TaxAmount currencyID="' . $venta['moneda'] . '">' . number_format($producto['igv'], 2) . '</cbc:TaxAmount>
+                        <cbc:TaxAmount currencyID="' . $venta['moneda'] . '">' . round($producto['igv'], 2) . '</cbc:TaxAmount>
                         <cac:TaxSubtotal>
                             <cbc:TaxableAmount currencyID="' . $venta['moneda'] . '">' . $producto['valor_total'] . '</cbc:TaxableAmount>
-                            <cbc:TaxAmount currencyID="' . $venta['moneda'] . '">' . number_format($producto['igv'], 2) . '</cbc:TaxAmount>
+                            <cbc:TaxAmount currencyID="' . $venta['moneda'] . '">' . round($producto['igv'], 2) . '</cbc:TaxAmount>
                             <cac:TaxCategory>
                                 <cbc:ID schemeID="UN/ECE 5305" schemeName="Tax Category Identifier" schemeAgencyName="United Nations Economic Commission for Europe">' . $producto['codigos'][0] . '</cbc:ID>
                                 <cbc:Percent>' . $producto['porcentaje_igv'] . '</cbc:Percent>
@@ -474,7 +475,7 @@ class ApiFacturacion
         return "generado xml";
     }
 
-    function Genera_XML_Nota_Debito($nombrexml, $emisor, $cliente, $comprobante, $detalle)
+    static function Genera_XML_Nota_Debito($path_xml, $name_xml, $datos_emisor, $datos_cliente, $venta, $detalle_venta = null)
     {
 
         $doc = new DOMDocument();
@@ -491,31 +492,32 @@ class ApiFacturacion
             </ext:UBLExtensions>
             <cbc:UBLVersionID>2.1</cbc:UBLVersionID>
             <cbc:CustomizationID>2.0</cbc:CustomizationID>
-            <cbc:ID>' . $comprobante['serie'] . '-' . $comprobante['correlativo'] . '</cbc:ID>
-            <cbc:IssueDate>' . $comprobante['fecha_emision'] . '</cbc:IssueDate>
+            <cbc:ID>' . $venta['serie'] . '-' . $venta['correlativo'] . '</cbc:ID>
+            <cbc:IssueDate>' . $venta['fecha_emision'] . '</cbc:IssueDate>
             <cbc:IssueTime>00:00:03</cbc:IssueTime>
-            <cbc:Note languageLocaleID="1000"><![CDATA[' . $comprobante['total_texto'] . ']]></cbc:Note>
-            <cbc:DocumentCurrencyCode>' . $comprobante['moneda'] . '</cbc:DocumentCurrencyCode>
+            <cbc:DocumentCurrencyCode>' . $venta['moneda'] . '</cbc:DocumentCurrencyCode>
             <cac:DiscrepancyResponse>
-                <cbc:ReferenceID>' . $comprobante['serie_ref'] . '-' . $comprobante['correlativo_ref'] . '</cbc:ReferenceID>
-                <cbc:ResponseCode>' . $comprobante['codmotivo'] . '</cbc:ResponseCode>
-                <cbc:Description>' . $comprobante['descripcion'] . '</cbc:Description>
+                <cbc:ReferenceID>' . $venta['serie_modificado'] . '-' . $venta['correlativo_modificado'] . '</cbc:ReferenceID>
+                <cbc:ResponseCode>' . $venta['motivo_nota_debito'] . '</cbc:ResponseCode>
+                <cbc:Description>' . $venta['descripcion_nota_debito'] . '</cbc:Description>
             </cac:DiscrepancyResponse>
             <cac:BillingReference>
                 <cac:InvoiceDocumentReference>
-                <cbc:ID>' . $comprobante['serie_ref'] . '-' . $comprobante['correlativo_ref'] . '</cbc:ID>
-                <cbc:DocumentTypeCode>' . $comprobante['tipo_comprobante_ref_id'] . '</cbc:DocumentTypeCode>
+                <cbc:ID>' . $venta['serie_modificado'] . '-' . $venta['correlativo_modificado'] . '</cbc:ID>
+                <cbc:DocumentTypeCode>' . $venta['tipo_comprobante_modificado'] . '</cbc:DocumentTypeCode>
                 </cac:InvoiceDocumentReference>
-            </cac:BillingReference>
-            <cac:Signature>
-                <cbc:ID>' . $emisor['ruc'] . '</cbc:ID>
-                <cbc:Note><![CDATA[' . $emisor['nombre_comercial'] . ']]></cbc:Note>
+            </cac:BillingReference>';
+
+            //DATOS DEL FIRMANTE:
+            $xml .= '<cac:Signature>
+                <cbc:ID>' . $datos_emisor['ruc'] . '</cbc:ID>
+                <cbc:Note><![CDATA[' . $datos_emisor['nombre_comercial'] . ']]></cbc:Note>
                 <cac:SignatoryParty>
                 <cac:PartyIdentification>
-                    <cbc:ID>' . $emisor['ruc'] . '</cbc:ID>
+                    <cbc:ID>' . $datos_emisor['ruc'] . '</cbc:ID>
                 </cac:PartyIdentification>
                 <cac:PartyName>
-                    <cbc:Name><![CDATA[' . $emisor['razon_social'] . ']]></cbc:Name>
+                    <cbc:Name><![CDATA[' . $datos_emisor['razon_social'] . ']]></cbc:Name>
                 </cac:PartyName>
                 </cac:SignatoryParty>
                 <cac:DigitalSignatureAttachment>
@@ -523,57 +525,64 @@ class ApiFacturacion
                     <cbc:URI>#SIGN-EMPRESA</cbc:URI>
                 </cac:ExternalReference>
                 </cac:DigitalSignatureAttachment>
-            </cac:Signature>
-            <cac:AccountingSupplierParty>
+            </cac:Signature>';
+            
+             //DATOS DE LA EMPRESA EMISORA:
+        $xml .= '<cac:AccountingSupplierParty>
                 <cac:Party>
                 <cac:PartyIdentification>
-                    <cbc:ID schemeID="' . $emisor['tipodoc'] . '">' . $emisor['ruc'] . '</cbc:ID>
+                    <cbc:ID schemeID="' . $datos_emisor['tipo_documento'] . '">' . $datos_emisor['ruc'] . '</cbc:ID>
                 </cac:PartyIdentification>
                 <cac:PartyName>
-                    <cbc:Name><![CDATA[' . $emisor['nombre_comercial'] . ']]></cbc:Name>
+                    <cbc:Name><![CDATA[' . $datos_emisor['nombre_comercial'] . ']]></cbc:Name>
                 </cac:PartyName>
                 <cac:PartyLegalEntity>
-                    <cbc:RegistrationName><![CDATA[' . $emisor['razon_social'] . ']]></cbc:RegistrationName>
+                    <cbc:RegistrationName><![CDATA[' . $datos_emisor['razon_social'] . ']]></cbc:RegistrationName>
                     <cac:RegistrationAddress>
-                        <cbc:ID>' . $emisor['ubigeo'] . '</cbc:ID>
+                        <cbc:ID>' . $datos_emisor['ubigeo'] . '</cbc:ID>
                         <cbc:AddressTypeCode>0000</cbc:AddressTypeCode>
                         <cbc:CitySubdivisionName>NONE</cbc:CitySubdivisionName>
-                        <cbc:CityName>' . $emisor['provincia'] . '</cbc:CityName>
-                        <cbc:CountrySubentity>' . $emisor['departamento'] . '</cbc:CountrySubentity>
-                        <cbc:District>' . $emisor['distrito'] . '</cbc:District>
+                        <cbc:CityName>' . $datos_emisor['provincia'] . '</cbc:CityName>
+                        <cbc:CountrySubentity>' . $datos_emisor['departamento'] . '</cbc:CountrySubentity>
+                        <cbc:District>' . $datos_emisor['distrito'] . '</cbc:District>
                         <cac:AddressLine>
-                            <cbc:Line><![CDATA[' . $emisor['direccion'] . ']]></cbc:Line>
+                            <cbc:Line><![CDATA[' . $datos_emisor['direccion'] . ']]></cbc:Line>
                         </cac:AddressLine>
                         <cac:Country>
-                            <cbc:IdentificationCode>' . $emisor['pais'] . '</cbc:IdentificationCode>
+                            <cbc:IdentificationCode>PE</cbc:IdentificationCode>
                         </cac:Country>
                     </cac:RegistrationAddress>
                 </cac:PartyLegalEntity>
                 </cac:Party>
-            </cac:AccountingSupplierParty>
-                <cac:AccountingCustomerParty>
+            </cac:AccountingSupplierParty>';
+
+        // DATOS DEL CLIENTE
+        $xml .= '<cac:AccountingCustomerParty>
                 <cac:Party>
                 <cac:PartyIdentification>
-                    <cbc:ID schemeID="' . $cliente['tipo_documento'] . '">' . $cliente['ruc'] . '</cbc:ID>
+                    <cbc:ID schemeID="' . $datos_cliente['tipo_documento'] . '">' . $datos_cliente['nro_documento'] . '</cbc:ID>
                 </cac:PartyIdentification>
                 <cac:PartyLegalEntity>
-                    <cbc:RegistrationName><![CDATA[' . $cliente['razon_social'] . ']]></cbc:RegistrationName>
+                    <cbc:RegistrationName><![CDATA[' . $datos_cliente['nombres_apellidos_razon_social'] . ']]></cbc:RegistrationName>
                     <cac:RegistrationAddress>
                         <cac:AddressLine>
-                            <cbc:Line><![CDATA[' . $cliente['direccion'] . ']]></cbc:Line>
+                            <cbc:Line><![CDATA[' . $datos_cliente['direccion'] . ']]></cbc:Line>
                         </cac:AddressLine>
                         <cac:Country>
-                            <cbc:IdentificationCode>' . $cliente['pais'] . '</cbc:IdentificationCode>
+                            <cbc:IdentificationCode>PE</cbc:IdentificationCode>
                         </cac:Country>
                     </cac:RegistrationAddress>
                 </cac:PartyLegalEntity>
                 </cac:Party>
-            </cac:AccountingCustomerParty>
-            <cac:TaxTotal>
-                <cbc:TaxAmount currencyID="' . $comprobante['moneda'] . '">' . $comprobante['igv'] . '</cbc:TaxAmount>
+            </cac:AccountingCustomerParty>';
+
+        //TOTAL DE IMPUESTOS:
+        if ($venta['total_operaciones_gravadas'] > 0) {
+            $xml .= '<cac:TaxTotal>
+                <cbc:TaxAmount currencyID="' . $venta['moneda'] . '">' . round($venta['total_impuestos'], 2) . '</cbc:TaxAmount>
                 <cac:TaxSubtotal>
-                <cbc:TaxableAmount currencyID="' . $comprobante['moneda'] . '">' . $comprobante['total_op_gravadas'] . '</cbc:TaxableAmount>
-                <cbc:TaxAmount currencyID="' . $comprobante['moneda'] . '">' . $comprobante['igv'] . '</cbc:TaxAmount>
+                <cbc:TaxableAmount currencyID="' . $venta['moneda'] . '">' . round($venta['total_operaciones_gravadas'], 2) . '</cbc:TaxableAmount>
+                <cbc:TaxAmount currencyID="' . $venta['moneda'] . '">' . round($venta['total_igv'], 2) . '</cbc:TaxAmount>
                 <cac:TaxCategory>
                     <cac:TaxScheme>
                         <cbc:ID>1000</cbc:ID>
@@ -582,11 +591,12 @@ class ApiFacturacion
                     </cac:TaxScheme>
                 </cac:TaxCategory>
                 </cac:TaxSubtotal>';
+            }
 
-        if ($comprobante['total_op_exoneradas'] > 0) {
+        if ($venta['total_operaciones_exoneradas'] > 0) {
             $xml .= '<cac:TaxSubtotal>
-                    <cbc:TaxableAmount currencyID="' . $comprobante['moneda'] . '">' . $comprobante['total_op_exoneradas'] . '</cbc:TaxableAmount>
-                    <cbc:TaxAmount currencyID="' . $comprobante['moneda'] . '">0.00</cbc:TaxAmount>
+                    <cbc:TaxableAmount currencyID="' . $venta['moneda'] . '">' . round($venta['total_operaciones_exoneradas'], 2) . '</cbc:TaxableAmount>
+                    <cbc:TaxAmount currencyID="' . $venta['moneda'] . '">0.00</cbc:TaxAmount>
                     <cac:TaxCategory>
                         <cbc:ID schemeID="UN/ECE 5305" schemeName="Tax Category Identifier" schemeAgencyName="United Nations Economic Commission for Europe">E</cbc:ID>
                         <cac:TaxScheme>
@@ -598,10 +608,10 @@ class ApiFacturacion
                 </cac:TaxSubtotal>';
         }
 
-        if ($comprobante['total_op_inafectas'] > 0) {
+        if ($venta['total_operaciones_inafectas'] > 0) {
             $xml .= '<cac:TaxSubtotal>
-                    <cbc:TaxableAmount currencyID="' . $comprobante['moneda'] . '">' . $comprobante['total_op_inafectas'] . '</cbc:TaxableAmount>
-                    <cbc:TaxAmount currencyID="' . $comprobante['moneda'] . '">0.00</cbc:TaxAmount>
+                    <cbc:TaxableAmount currencyID="' . $venta['moneda'] . '">' . round($venta['total_operaciones_inafectas'], 2) . '</cbc:TaxableAmount>
+                    <cbc:TaxAmount currencyID="' . $venta['moneda'] . '">0.00</cbc:TaxAmount>
                     <cac:TaxCategory>
                         <cbc:ID schemeID="UN/ECE 5305" schemeName="Tax Category Identifier" schemeAgencyName="United Nations Economic Commission for Europe">E</cbc:ID>
                         <cac:TaxScheme>
@@ -615,46 +625,46 @@ class ApiFacturacion
 
         $xml .= '</cac:TaxTotal>
             <cac:RequestedMonetaryTotal>
-                <cbc:PayableAmount currencyID="' . $comprobante['moneda'] . '">' . $comprobante['total_a_pagar'] . '</cbc:PayableAmount>
+                <cbc:PayableAmount currencyID="' . $venta['moneda'] . '">' . $venta['total_a_pagar'] . '</cbc:PayableAmount>
             </cac:RequestedMonetaryTotal>';
 
-        foreach ($detalle as $k => $v) {
+        foreach ($detalle_venta as $producto) {
 
             $xml .= '<cac:DebitNoteLine>
-                <cbc:ID>' . $v['item'] . '</cbc:ID>
-                <cbc:DebitedQuantity unitCode="' . $v['unidad'] . '">' . $v['cantidad'] . '</cbc:DebitedQuantity>
-                <cbc:LineExtensionAmount currencyID="' . $comprobante['moneda'] . '">' . $v['total_antes_impuestos'] . '</cbc:LineExtensionAmount>
+                <cbc:ID>' . $producto['item'] . '</cbc:ID>
+                <cbc:DebitedQuantity unitCode="' . $producto['unidad'] . '">' . $producto['cantidad'] . '</cbc:DebitedQuantity>
+                <cbc:LineExtensionAmount currencyID="' . $venta['moneda'] . '">' . $producto['valor_total'] . '</cbc:LineExtensionAmount>
                 <cac:PricingReference>
                     <cac:AlternativeConditionPrice>
-                        <cbc:PriceAmount currencyID="' . $comprobante['moneda'] . '">' . $v['precio_lista'] . '</cbc:PriceAmount>
-                        <cbc:PriceTypeCode>' . $v['tipo_precio'] . '</cbc:PriceTypeCode>
+                        <cbc:PriceAmount currencyID="' . $venta['moneda'] . '">' . round($producto['precio_unitario'], 2) . '</cbc:PriceAmount>
+                        <cbc:PriceTypeCode>01</cbc:PriceTypeCode>
                     </cac:AlternativeConditionPrice>
                 </cac:PricingReference>
                 <cac:TaxTotal>
-                    <cbc:TaxAmount currencyID="' . $comprobante['moneda'] . '">' . $v['igv'] . '</cbc:TaxAmount>
+                    <cbc:TaxAmount currencyID="' . $venta['moneda'] . '">' . round($producto['igv'], 2) . '</cbc:TaxAmount>
                     <cac:TaxSubtotal>
-                        <cbc:TaxableAmount currencyID="' . $comprobante['moneda'] . '">' . $v['valor_total'] . '</cbc:TaxableAmount>
-                        <cbc:TaxAmount currencyID="' . $comprobante['moneda'] . '">' . $v['igv'] . '</cbc:TaxAmount>
+                        <cbc:TaxableAmount currencyID="' . $venta['moneda'] . '">' . $producto['valor_total'] . '</cbc:TaxableAmount>
+                        <cbc:TaxAmount currencyID="' . $venta['moneda'] . '">' . round($producto['igv'], 2) . '</cbc:TaxAmount>
                         <cac:TaxCategory>
-                            <cbc:ID schemeID="UN/ECE 5305" schemeName="Tax Category Identifier" schemeAgencyName="United Nations Economic Commission for Europe">' . $v['codigos'][0] . '</cbc:ID>
-                            <cbc:Percent>' . $v['porcentaje_igv'] . '</cbc:Percent>
-                            <cbc:TaxExemptionReasonCode listAgencyName="PE:SUNAT" listName="Afectacion del IGV" listURI="urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo07">' . $v['codigos'][1] . '</cbc:TaxExemptionReasonCode>
+                            <cbc:ID schemeID="UN/ECE 5305" schemeName="Tax Category Identifier" schemeAgencyName="United Nations Economic Commission for Europe">' . $producto['codigos'][0] . '</cbc:ID>
+                            <cbc:Percent>' . $producto['porcentaje_igv'] . '</cbc:Percent>
+                            <cbc:TaxExemptionReasonCode listAgencyName="PE:SUNAT" listName="Afectacion del IGV" listURI="urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo07">' . $producto['codigos'][1] . '</cbc:TaxExemptionReasonCode>
                             <cac:TaxScheme>
-                            <cbc:ID schemeID="UN/ECE 5153" schemeName="Codigo de tributos" schemeAgencyName="PE:SUNAT">' . $v['codigos'][2] . '</cbc:ID>
-                            <cbc:Name>' . $v['codigos'][3] . '</cbc:Name>
-                            <cbc:TaxTypeCode>' . $v['codigos'][4] . '</cbc:TaxTypeCode>
+                            <cbc:ID schemeID="UN/ECE 5153" schemeName="Codigo de tributos" schemeAgencyName="PE:SUNAT">' . $producto['codigos'][2] . '</cbc:ID>
+                            <cbc:Name>' . $producto['codigos'][3] . '</cbc:Name>
+                            <cbc:TaxTypeCode>' . $producto['codigos'][4] . '</cbc:TaxTypeCode>
                             </cac:TaxScheme>
                         </cac:TaxCategory>
                     </cac:TaxSubtotal>
                 </cac:TaxTotal>
                 <cac:Item>
-                    <cbc:Description><![CDATA[' . $v['nombre'] . ']]></cbc:Description>
+                    <cbc:Description><![CDATA[' . $producto['descripcion'] . ']]></cbc:Description>
                     <cac:SellersItemIdentification>
-                        <cbc:ID>' . $v['codigo'] . '</cbc:ID>
+                        <cbc:ID>' . $producto['codigo'] . '</cbc:ID>
                     </cac:SellersItemIdentification>
                 </cac:Item>
                 <cac:Price>
-                    <cbc:PriceAmount currencyID="' . $comprobante['moneda'] . '">' . $v['valor_unitario'] . '</cbc:PriceAmount>
+                    <cbc:PriceAmount currencyID="' . $venta['moneda'] . '">' . $producto['valor_unitario'] . '</cbc:PriceAmount>
                 </cac:Price>
                 </cac:DebitNoteLine>';
         }
@@ -662,7 +672,9 @@ class ApiFacturacion
         $xml .= '</DebitNote>';
 
         $doc->loadXML($xml);
-        $doc->save($nombrexml . '.XML');
+        $doc->save($path_xml . $name_xml . '.XML');
+
+        return "generado xml";
     }
 
     static public function CrearXMLResumenDocumentos($path_xml, $name_xml, $datos_emisor, $comprobante, $resumen_comprobante)
@@ -719,27 +731,27 @@ class ApiFacturacion
                  <cac:Status>
                     <cbc:ConditionCode>' . $venta['condicion'] . '</cbc:ConditionCode>
                  </cac:Status>                
-                 <sac:TotalAmount currencyID="' . $venta['moneda'] . '">' . number_format($venta['importe_total'], 2) . '</sac:TotalAmount>
+                 <sac:TotalAmount currencyID="' . $venta['moneda'] . '">' . round($venta['importe_total'], 2) . '</sac:TotalAmount>
                        <sac:BillingPayment>
-                       <cbc:PaidAmount currencyID="' . $venta['moneda'] . '">' . number_format($venta['ope_gravadas'], 2) . '</cbc:PaidAmount>
+                       <cbc:PaidAmount currencyID="' . $venta['moneda'] . '">' . round($venta['ope_gravadas'], 2) . '</cbc:PaidAmount>
                            <cbc:InstructionID>01</cbc:InstructionID>
                        </sac:BillingPayment>';
             if ($venta['ope_exoneradas'] > 0) {
                 $xml .= '<sac:BillingPayment>
-                       <cbc:PaidAmount currencyID="' . $venta['moneda'] . '">' . number_format($venta['ope_exoneradas'], 2) . '</cbc:PaidAmount>
+                       <cbc:PaidAmount currencyID="' . $venta['moneda'] . '">' . round($venta['ope_exoneradas'], 2) . '</cbc:PaidAmount>
                            <cbc:InstructionID>02</cbc:InstructionID>
                        </sac:BillingPayment>';
             }
             if ($venta['ope_inafectas'] > 0) {
                 $xml .= '<sac:BillingPayment>
-                       <cbc:PaidAmount currencyID="' . $venta['moneda'] . '">' . number_format($venta['ope_inafectas'], 2) . '</cbc:PaidAmount>
+                       <cbc:PaidAmount currencyID="' . $venta['moneda'] . '">' . round($venta['ope_inafectas'], 2) . '</cbc:PaidAmount>
                            <cbc:InstructionID>02</cbc:InstructionID>
                        </sac:BillingPayment>';
             }
             $xml .= '<cac:TaxTotal>
-                     <cbc:TaxAmount currencyID="' . $venta['moneda'] . '">' . number_format($venta['total_impuestos'], 2) . '</cbc:TaxAmount>';
+                     <cbc:TaxAmount currencyID="' . $venta['moneda'] . '">' . round($venta['total_impuestos'], 2) . '</cbc:TaxAmount>';
             $xml .= '<cac:TaxSubtotal>
-                         <cbc:TaxAmount currencyID="' . $venta['moneda'] . '">' . number_format($venta['igv_total'], 2) . '</cbc:TaxAmount>
+                         <cbc:TaxAmount currencyID="' . $venta['moneda'] . '">' . round($venta['igv_total'], 2) . '</cbc:TaxAmount>
                          <cac:TaxCategory>
                              <cac:TaxScheme>
                                  <cbc:ID>1000</cbc:ID>
@@ -811,10 +823,22 @@ class ApiFacturacion
             //GENERAMOS EL ENVIO A LA SUNAT (AMBIENTE BETA)
 
             //AMBIENTE DE PRUEBAS
-            $ws = "https://e-beta.sunat.gob.pe/ol-ti-itcpfegem-beta/billService";
+            // $ws = "https://e-beta.sunat.gob.pe/ol-ti-itcpfegem-beta/billService";
 
             //AMBIENTE DE PRODUCCION:
             // $ws = "https://e-factura.sunat.gob.pe/ol-ti-itcpfegem/billService?wsdl";
+
+            $modo_sunat = ConfiguracionesModelo::mdlObtenerConfiguracionValue(200, 3)["valor"];
+
+            if($modo_sunat == "DESARROLLO"){
+                $ws = ConfiguracionesModelo::mdlObtenerConfiguracionValue(200, 2)["valor"];
+                
+
+            }else{
+                $ws = ConfiguracionesModelo::mdlObtenerConfiguracionValue(200, 1)["valor"];
+            }
+            $usuario_sol = ConfiguracionesModelo::mdlObtenerConfiguracionValue(400, 1)["valor"];
+            $clave_sol = ConfiguracionesModelo::mdlObtenerConfiguracionValue(400, 2)["valor"];
 
             $ruta_archivo_zip = $rutazip;
             $nombre_archivo_zip = $nombrezip;
@@ -825,8 +849,8 @@ class ApiFacturacion
 				 <soapenv:Header>
 				 	<wsse:Security>
 				 		<wsse:UsernameToken>
-				 			<wsse:Username>' . $datos_emisor['ruc'] . $datos_emisor['usuario_sol'] . '</wsse:Username>
-				 			<wsse:Password>' . $datos_emisor['clave_sol'] . '</wsse:Password>
+				 			<wsse:Username>' . $datos_emisor['ruc'] . $usuario_sol . '</wsse:Username>
+				 			<wsse:Password>' . $clave_sol . '</wsse:Password>
 				 		</wsse:UsernameToken>
 				 	</wsse:Security>
 				 </soapenv:Header>
@@ -854,12 +878,17 @@ class ApiFacturacion
             curl_setopt($ch, CURLOPT_URL, $ws);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 60);
             curl_setopt($ch, CURLOPT_POST, true);
             curl_setopt($ch, CURLOPT_POSTFIELDS, $xml_envio);
             curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
 
-            $response = curl_exec($ch);
+            // curl_setopt($ch, CURLOPT_CAINFO, dirname(__FILE__)."/cacert.pem");
+
+            $response = curl_exec($ch);            
+
+            // var_dump($response);
+            // return;
 
             $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             $estado_respuesta_sunat = "0";
@@ -871,9 +900,11 @@ class ApiFacturacion
             // $resultado["hash_signature"] = $response_signature['hash_cpe'];
             $resultado['xml_cdr_sunat_base64'] = "";
             $resultado["estado_respuesta_sunat"] = $estado_respuesta_sunat;
+            
+            curl_close($ch);
 
             if ($http_code == 200) { //200->La comunicación fue satisfactoria
-
+                // var_dump('$http_code == 200');
                 $document = new DOMDocument();
                 $document->loadXML($response);
 
@@ -902,6 +933,11 @@ class ApiFacturacion
 
                     $resultado['mensaje_respuesta_sunat'] = $mensaje_respuesta_sunat;
                     $resultado['xml_cdr_sunat_base64'] = base64_encode($datos_cdr);
+
+                    $resultado["error"] = "0";
+                   
+                    return $resultado;
+
                 } else {
 
                     $estado_respuesta_sunat = "2"; //   RECHAZADO
@@ -912,32 +948,43 @@ class ApiFacturacion
 
                     $resultado['codigo_error_sunat'] = $codigo_error_sunat;
                     $resultado['mensaje_respuesta_sunat'] = $mensaje_respuesta_sunat;
-                }
 
-                $resultado["error"] = "0";
+                    $resultado["error"] = "-1";
+
+                    return $resultado;
+                }
+                
             } else {
 
-                $document = new DOMDocument();
-                $document->loadXML($response);
+                // var_dump('$http_code != 200');
+                // $document = new DOMDocument();
+                // $document->loadXML($response);
 
                 $estado_respuesta_sunat = "3";
                 $resultado["estado_respuesta_sunat"] = $estado_respuesta_sunat;
 
-                $codigo_error_sunat = $document->getElementsByTagName("faultcode")->item(0)->nodeValue;
-                $mensaje_respuesta_sunat = $document->getElementsByTagName("faultstring")->item(0)->nodeValue;
+                // $codigo_error_sunat = $document->getElementsByTagName("faultcode")->item(0)->nodeValue;
+                // $mensaje_respuesta_sunat = $document->getElementsByTagName("faultstring")->item(0)->nodeValue;
 
-                $resultado['codigo_error_sunat'] = $codigo_error_sunat;
-                $resultado['mensaje_respuesta_sunat'] = $mensaje_respuesta_sunat;
-                $resultado["error"] = "0";
+                // $resultado['codigo_error_sunat'] = $codigo_error_sunat;
+                // $resultado['mensaje_respuesta_sunat'] = $mensaje_respuesta_sunat;
+
+                $resultado['codigo_error_sunat'] = -1;
+                $resultado['mensaje_respuesta_sunat'] = "Error de comunicación con Sunat";
+                $resultado["error"] = "-1";
+                // curl_close($ch);
+                return $resultado;
             }
-            curl_close($ch);
+            // curl_close($ch);
         } else {
 
             $resultado["error_proceso"] = "El archivo "  . $name_xml . '.XML no existe';
             $resultado["error"] = "-1";
+            // curl_close($ch);
+            return $resultado;
         }
 
-        return $resultado;
+        
     }
 
     static public function EnviarResumenComprobantes($path_xml, $name_xml, $datos_emisor, $path_file_cdr)
@@ -973,10 +1020,18 @@ class ApiFacturacion
         //Enviamos el archivo a sunat
 
         //AMBIENTE DE PRUEBAS:
-        $ws = "https://e-beta.sunat.gob.pe/ol-ti-itcpfegem-beta/billService";
+        // $ws = "https://e-beta.sunat.gob.pe/ol-ti-itcpfegem-beta/billService";
 
         //AMBIENTE DE PRODUCCION:
         // $ws = "https://e-factura.sunat.gob.pe/ol-ti-itcpfegem/billService?wsdl";
+
+        $modo_sunat = ConfiguracionesModelo::mdlObtenerConfiguracionValue(200, 3)["valor"];
+
+        if($modo_sunat == "DESARROLLO"){
+            $ws = ConfiguracionesModelo::mdlObtenerConfiguracionValue(200, 2)["valor"];
+        }else{
+            $ws = ConfiguracionesModelo::mdlObtenerConfiguracionValue(200, 1)["valor"];
+        }
 
         $ruta_archivo_zip = $rutazip;
         $nombre_archivo_zip = $nombrezip;

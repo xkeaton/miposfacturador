@@ -32,52 +32,124 @@ class ArqueoCajaModelo
         return $stmt->fetchAll();
     }
 
+    static public function mdlObtenerArqueos($usuario, $fecha_desde, $fecha_hasta)
+    {
+
+        // $id_usuario = $_SESSION["usuario"]->id_usuario;
+
+        $stmt = Conexion::conectar()->prepare("SELECT '' as opciones,
+                                                ac.id,
+                                                usu.id_usuario,
+                                                concat(usu.nombre_usuario, ' ', usu.apellido_usuario) as usuario,
+                                                ac.fecha_apertura,
+                                                ac.fecha_cierre,
+                                                round(ifnull(ac.monto_apertura,0),2) as monto_apertura,
+                                                round(ifnull(ac.ingresos,0),2) as ingresos,
+                                                round(ifnull(ac.devoluciones,0),2) as devoluciones,
+                                                round(ifnull(ac.gastos,0),2) as gastos,
+                                                round(ifnull(ac.monto_final,0),2) as monto_final,
+                                                case when ac.estado = 1 then 'CAJA ABIERTA' else 'CAJA CERRADA' end estado
+                                        FROM arqueo_caja ac INNER JOIN usuarios usu on ac.id_usuario = usu.id_usuario
+                                        WHERE (ac.id_usuario = :usuario or :usuario = '')
+                                        AND (DATE(ac.fecha_apertura) >= :fecha_desde OR :fecha_desde = '')
+                                        AND (DATE(ac.fecha_apertura) <= :fecha_hasta OR :fecha_hasta = '')
+                                        ORDER BY ac.id desc
+                                        LIMIT 10000");
+
+        $stmt->bindParam(":usuario", $usuario, PDO::PARAM_INT);
+        $stmt->bindParam(":fecha_desde", $fecha_desde, PDO::PARAM_STR);
+        $stmt->bindParam(":fecha_hasta", $fecha_hasta, PDO::PARAM_STR);
+        $stmt->execute();
+
+        return $stmt->fetchAll();
+    }
+    
     static public function mdlObtenerArqueoPorDia()
     {
 
         $id_usuario = $_SESSION["usuario"]->id_usuario;
 
-        $stmt = Conexion::conectar()->prepare("select ifnull(ac.id,0) as id,
+        $stmt = Conexion::conectar()->prepare("select ac.id,
                                                     usu.usuario,
                                                     ac.fecha_apertura,
                                                     ac.fecha_cierre,
-                                                    ifnull(ac.monto_apertura,0) as monto_apertura,
                                                     ifnull(ac.monto_apertura,0) as monto_apertura,
                                                     ifnull(ac.ingresos,0) as ingresos,
                                                     ifnull(ac.devoluciones,0) as devoluciones,
                                                     ifnull(ac.gastos,0) as gastos,
                                                     ifnull(ac.monto_final,0) as monto_final,
                                                     ac.estado,
-                                                    count(1) as cantidad,
-                                                    (select simbolo from moneda where id = 'PEN') as simbolo_moneda
+                                                    (select simbolo from moneda where id = 'PEN') as simbolo_moneda,
+                                                    usu.id_caja as id_caja
                                             from arqueo_caja ac inner join usuarios usu on ac.id_usuario = usu.id_usuario
                                             where ac.id_usuario = :id_usuario
                                             and ac.estado = 1
-                                            and date(ac.fecha_apertura) = curdate()");
+                                            and date(ac.fecha_apertura) = curdate()
+                                            limit 1");
 
         $stmt->bindParam(":id_usuario", $id_usuario, PDO::PARAM_INT);
         $stmt->execute();
 
-        return $stmt->fetch(PDO::FETCH_OBJ);
+        $row = $stmt->fetch(PDO::FETCH_OBJ);
+        if ($row) {
+            $row->cantidad = 1;
+            return $row;
+        } else {
+            $stmtUser = Conexion::conectar()->prepare("select usuario, id_caja from usuarios where id_usuario = :id_usuario");
+            $stmtUser->bindParam(":id_usuario", $id_usuario, PDO::PARAM_INT);
+            $stmtUser->execute();
+            $user = $stmtUser->fetch(PDO::FETCH_OBJ);
+
+            $dummy = new stdClass();
+            $dummy->id = 0;
+            $dummy->usuario = $user ? $user->usuario : '';
+            $dummy->fecha_apertura = null;
+            $dummy->fecha_cierre = null;
+            $dummy->monto_apertura = 0;
+            $dummy->ingresos = 0;
+            $dummy->devoluciones = 0;
+            $dummy->gastos = 0;
+            $dummy->monto_final = 0;
+            $dummy->estado = null;
+            $dummy->cantidad = 0;
+            $dummy->simbolo_moneda = 'S/';
+            $dummy->id_caja = $user ? $user->id_caja : null;
+            return $dummy;
+        }
     }
 
-    static public function mdlObtenerArqueoPorId($id_arqueo)
+    static public function mdlObtenerArqueoPorId($id_arqueo, $id_usuario_arqueo = 0)
     {
 
-        $id_usuario = $_SESSION["usuario"]->id_usuario;
 
-        $stmt = Conexion::conectar()->prepare("SELECT ifnull(ac.id,0) as id,
+        $id_usuario = $id_usuario_arqueo > 0 ? $id_usuario_arqueo :$_SESSION["usuario"]->id_usuario;
+
+        $stmt = Conexion::conectar()->prepare("SELECT ac.id,
                                                     usu.usuario,
                                                     ac.fecha_apertura,
                                                     ac.fecha_cierre,
-                                                    ifnull(ac.monto_apertura,0) as monto_apertura,
                                                     ifnull(FORMAT(ac.monto_apertura,2),0) as monto_apertura,
                                                     ifnull(FORMAT(ac.ingresos,2),0) as ingresos,
                                                     round((select sum(ifnull(x.monto,0)) 
                                                             from movimientos_arqueo_caja x
                                                             where x.id_arqueo_caja = ac.id
-                                                            and x.id_tipo_movimiento = 3
-                                                            and (UPPER(x.descripcion) like '%CONTADO%' or UPPER(x.descripcion) like '%PAGO%')),2) as ingresos_efectivo,
+                                                            and x.id_tipo_movimiento = 3),2) as ingresos_efectivo,
+                                                            round((select sum(ifnull(x.monto,0)) 
+                                                            from movimientos_arqueo_caja x
+                                                            where x.id_arqueo_caja = ac.id
+                                                            and x.id_tipo_movimiento = 6),2) as ingresos_yape,
+                                                            round((select sum(ifnull(x.monto,0)) 
+                                                            from movimientos_arqueo_caja x
+                                                            where x.id_arqueo_caja = ac.id
+                                                            and x.id_tipo_movimiento = 7),2) as ingresos_plin,
+                                                            round((select sum(ifnull(x.monto,0)) 
+                                                            from movimientos_arqueo_caja x
+                                                            where x.id_arqueo_caja = ac.id
+                                                            and x.id_tipo_movimiento = 8),2) as ingresos_transferencia,
+                                                            round((select sum(ifnull(x.monto,0)) 
+                                                            from movimientos_arqueo_caja x
+                                                            where x.id_arqueo_caja = ac.id
+                                                            and x.id_tipo_movimiento = 9),2) as ingresos_canje,
                                                     round((select sum(ifnull(x.monto,0)) 
                                                             from movimientos_arqueo_caja x
                                                             where x.id_arqueo_caja = ac.id
@@ -87,17 +159,47 @@ class ArqueoCajaModelo
                                                     ifnull(FORMAT(ac.gastos,2),0) as gastos,
                                                     ifnull(FORMAT(ac.monto_final,2),0) as monto_final,
                                                     ac.estado,
-                                                    count(1) as cantidad,
                                                     (select simbolo from moneda where id = 'PEN') as simbolo_moneda
                                             from arqueo_caja ac inner join usuarios usu on ac.id_usuario = usu.id_usuario
                                             where ac.id_usuario = :id_usuario
-                                            and ac.id = :id_arqueo");
+                                            and ac.id = :id_arqueo
+                                            limit 1");
 
         $stmt->bindParam(":id_usuario", $id_usuario, PDO::PARAM_STR);
         $stmt->bindParam(":id_arqueo", $id_arqueo, PDO::PARAM_STR);
         $stmt->execute();
 
-        return $stmt->fetch(PDO::FETCH_OBJ);
+        $row = $stmt->fetch(PDO::FETCH_OBJ);
+        if ($row) {
+            $row->cantidad = 1;
+            return $row;
+        } else {
+            $stmtUser = Conexion::conectar()->prepare("select usuario from usuarios where id_usuario = :id_usuario");
+            $stmtUser->bindParam(":id_usuario", $id_usuario, PDO::PARAM_INT);
+            $stmtUser->execute();
+            $user = $stmtUser->fetch(PDO::FETCH_OBJ);
+
+            $dummy = new stdClass();
+            $dummy->id = 0;
+            $dummy->usuario = $user ? $user->usuario : '';
+            $dummy->fecha_apertura = null;
+            $dummy->fecha_cierre = null;
+            $dummy->monto_apertura = '0.00';
+            $dummy->ingresos = '0.00';
+            $dummy->ingresos_efectivo = 0;
+            $dummy->ingresos_yape = 0;
+            $dummy->ingresos_plin = 0;
+            $dummy->ingresos_transferencia = 0;
+            $dummy->ingresos_canje = 0;
+            $dummy->ingresos_credito = 0;
+            $dummy->devoluciones = '0.00';
+            $dummy->gastos = '0.00';
+            $dummy->monto_final = '0.00';
+            $dummy->estado = null;
+            $dummy->cantidad = 0;
+            $dummy->simbolo_moneda = 'S/';
+            return $dummy;
+        }
     }
 
 
@@ -122,6 +224,20 @@ class ArqueoCajaModelo
 
             $dbh = Conexion::conectar();
 
+            // Fetch current totals from database for safety and correct values
+            $stmtBox = $dbh->prepare("SELECT ifnull(monto_apertura, 0) as monto_apertura,
+                                             ifnull(ingresos, 0) as ingresos,
+                                             ifnull(devoluciones, 0) as devoluciones,
+                                             ifnull(gastos, 0) as gastos
+                                      FROM arqueo_caja WHERE id = ?");
+            $stmtBox->execute(array($id_caja));
+            $box = $stmtBox->fetch(PDO::FETCH_OBJ);
+
+            $real_ingresos = $box ? $box->ingresos : 0;
+            $real_devoluciones = $box ? $box->devoluciones : 0;
+            $real_gastos = $box ? $box->gastos : 0;
+            $real_monto_final = $box ? ($box->monto_apertura + $box->ingresos - $box->devoluciones - $box->gastos) : 0;
+
             $stmt = $dbh->prepare("update arqueo_caja
                                      set fecha_cierre = current_timestamp(),
                                             ingresos = ?,
@@ -136,10 +252,10 @@ class ArqueoCajaModelo
 
             $dbh->beginTransaction();
             $stmt->execute(array(
-                $ingresos,
-                $devoluciones,
-                $gastos,
-                $monto_final,
+                $real_ingresos,
+                $real_devoluciones,
+                $real_gastos,
+                $real_monto_final,
                 $monto_real,
                 $sobrante,
                 $faltante,
@@ -436,7 +552,7 @@ class ArqueoCajaModelo
         return $output;
     }
 
-    static public function mdlObtenerDatosEmisor($id_empresa)
+    static public function mdlObtenerDatosEmisor()
     {
         $stmt = Conexion::conectar()->prepare("SELECT id_empresa, 
                                                         razon_social, 
@@ -454,8 +570,8 @@ class ArqueoCajaModelo
                                                         usuario_sol, 
                                                         clave_sol
                                                 FROM empresas
-                                                where id_empresa = :id_empresa");
-        $stmt->bindParam(":id_empresa", $id_empresa, PDO::PARAM_STR);
+                                                where estado = 1");
+        // $stmt->bindParam(":id_empresa", $id_empresa, PDO::PARAM_STR);
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_NAMED);
     }

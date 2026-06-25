@@ -35,6 +35,13 @@ if (isset($_POST["accion"])) {
             echo json_encode($response, JSON_UNESCAPED_UNICODE);
             break;
 
+        case 'obtener_motivo_nota_debito':
+
+            $response = SeriesModelo::mdlObtenerMotivosNotaDebito();
+
+            echo json_encode($response, JSON_UNESCAPED_UNICODE);
+            break;
+
         case 'registrar_serie':
 
             //Datos del formulario

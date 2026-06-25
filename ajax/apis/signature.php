@@ -9,8 +9,8 @@ class Signature {
         
         $doc = new DOMDocument();
 
-        $doc->formatOutput = FALSE;
-        $doc->preserveWhiteSpace = TRUE;
+        // $doc->formatOutput = true;
+        // $doc->preserveWhiteSpace = false;
         $doc->load($ruta);
 
         $objDSig = new XMLSecurityDSig(FALSE);
@@ -23,12 +23,10 @@ class Signature {
         $objKey = new XMLSecurityKey(XMLSecurityKey::RSA_SHA1, array('type' => 'private'));
 
         
-        // $ruta_firma = "\home\tutoria3\public_html\fe\certificado\certificado_phperu.pfx";
         $pfx = file_get_contents($ruta_firma);
         $key = array();
-        // var_dump($pfx);
-        //openssl_sign($pfx, $key, $pass_firma);
-        openssl_pkcs12_read($pfx, $key, "123456");
+
+        openssl_pkcs12_read($pfx, $key, $pass_firma);
         
         $objKey->loadKey($key["pkey"]);
         $objDSig->add509Cert($key["cert"], TRUE, FALSE);

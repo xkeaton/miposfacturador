@@ -1,5 +1,5 @@
 <?php
-
+date_default_timezone_set('America/Lima');
 ?>
 
 <html lang="en">
@@ -11737,19 +11737,7 @@
 <body>
 
     <div class="container-fluid">
-        <p class="text-center my-1"><?php echo $empresa["razon_social"]; ?></p>
-        <p class="text-center my-1" style="font-size: 12px;"><?php echo $empresa["ruc"]; ?></p>
-        <p class="text-center my-1" style="font-size: 12px;"><?php echo $empresa["direccion"]; ?></p>
-        <p class="text-center my-1" style="font-size: 12px;"><?php echo $empresa["telefono"]; ?></p>
-        <p class="text-center my-1" style="font-size: 12px;"><?php echo $empresa["email"]; ?></p>
-        
-        <hr>
-        
-        <p class="text-left my-1" style="font-size: 12px;">Cajero: <?php echo $_SESSION["usuario"]->nombre_usuario . " " . $_SESSION["usuario"]->apellido_usuario; ?></p>
-        <p class="text-left my-1" style="font-size: 12px;">Fecha Apertura: <?php echo $arqueo_caja->fecha_apertura; ?></p>
-        <p class="text-left my-1" style="font-size: 12px;">Fecha Cierre: <?php echo $arqueo_caja->fecha_cierre; ?></p>
-        <p class="text-left my-1" style="font-size: 12px;">Estado: <?php echo $arqueo_caja->estado = 1 ? "ABIERTA" : "CERRADA"; ?></p>
-        <p class="text-left my-1" style="font-size: 12px;">Moneda: Soles</p>
+      
 
         <p class="text-center" style="font-size: 12px;">------------- Detalle Movimientos -------------</p>
 
@@ -11760,9 +11748,21 @@
                     <td style="font-size: 12px;text-align: right">S/ <?php echo number_format($arqueo_caja->monto_apertura,2); ?></td>
                 </tr>
                 <tr>
-                    <td style="font-size: 12px;">Ingresos:</td>
+                    <td style="font-size: 12px;">Ingresos Efectivo:</td>
                     <td style="font-size: 12px;text-align: right">S/ <?php echo number_format($arqueo_caja->ingresos,2); ?></td>
                 </tr>
+                <tr>
+                    <td style="font-size: 12px;">Ingresos Yape:</td>
+                    <td style="font-size: 12px;text-align: right">S/ <?php echo number_format($arqueo_caja->ingresos_yape,2); ?></td>
+                </tr>
+                <tr>
+                    <td style="font-size: 12px;">Ingresos Plin:</td>
+                    <td style="font-size: 12px;text-align: right">S/ <?php echo number_format($arqueo_caja->ingresos_plin,2); ?></td>
+                </tr>
+                <tr>
+                    <td style="font-size: 12px;">Ingresos Transferencia:</td>
+                    <td style="font-size: 12px;text-align: right">S/ <?php echo number_format($arqueo_caja->ingresos_transferencia,2); ?></td>
+                </tr>               
                 <tr>
                     <td style="font-size: 12px;">Devoluciones:</td>
                     <td style="font-size: 12px;text-align: right">S/ <?php echo number_format($arqueo_caja->devoluciones,2); ?></td>
@@ -11785,6 +11785,10 @@
                 <tr>
                     <td style="font-size: 12px;">Ingresos Totales Crédito: </td>
                     <td style="font-size: 12px;text-align: right">S/ <?php echo number_format($arqueo_caja->ingresos_credito,2); ?></td>
+                </tr>
+                <tr>
+                    <td style="font-size: 12px;">Ingresos Cta Bancaria: </td>
+                    <td style="font-size: 12px;text-align: right">S/ <?php echo number_format($arqueo_caja->ingresos_yape+$arqueo_caja->ingresos_plin+$arqueo_caja->ingresos_transferencia,2); ?></td>
                 </tr>
                 <tr>
                     <td style="font-size: 12px;">Egresos Totales:</td>

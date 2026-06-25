@@ -41,7 +41,8 @@ class PerfilesModelo{
 
         $column = ["id_perfil", "descripcion", "estado"];
 
-        $query = " SELECT p.id_perfil,
+        $query = " SELECT '' as opciones,
+                        p.id_perfil,
                         p.descripcion,
                         case when p.estado = 1 then 'ACTIVO' else 'INACTIVO' end as estado
                     FROM perfiles p ";
@@ -79,13 +80,14 @@ class PerfilesModelo{
 
         foreach ($results as $row) {
             $sub_array = array();
+            $sub_array[] = $row['opciones'];
             $sub_array[] = $row['id_perfil'];
             $sub_array[] = $row['descripcion'];
             $sub_array[] = $row['estado'];
             $data[] = $sub_array;
         }
 
-        $stmt = Conexion::conectar()->prepare("SELECT 1
+        $stmt = Conexion::conectar()->prepare("SELECT '1'
                                                 FROM perfiles");
 
         $stmt->execute();
@@ -129,5 +131,53 @@ class PerfilesModelo{
         }
 
         return $respuesta;
+    }
+
+    static public function mdlActualizarPerfil($id_perfil, $perfil)
+    {
+
+        $dbh = Conexion::conectar();
+
+        try {
+
+            $stmt = $dbh->prepare("UPDATE  perfiles 
+                                        SET descripcion = :descripcion, 
+                                             estado = :estado
+                                        WHERE id_perfil = :id_perfil");
+
+            $dbh->beginTransaction();
+            $stmt->execute(array(
+                ':descripcion' => $perfil['descripcion'],
+                ':estado' => $perfil['estado'],
+                ':id_perfil' => $id_perfil,
+            ));
+
+            $dbh->commit();
+
+            $respuesta['tipo_msj'] = 'success';
+            $respuesta['msj'] = 'Se actualizó el perfil correctamente';
+        } catch (Exception $e) {
+            $dbh->rollBack();
+            $respuesta['tipo_msj'] = 'error';
+            $respuesta['msj'] = 'Error al actualizar el perfil ' . $e->getMessage();
+        }
+
+        return $respuesta;
+    }
+
+    static public function mdlObtenerPerfilPorId($id_perfil){
+
+        $stmt = Conexion::conectar()->prepare("select p.id_perfil,
+                                                        p.descripcion,
+                                                        p.estado
+                                                from perfiles p
+                                                where id_perfil = :id_perfil");
+
+        $stmt->bindParam(":id_perfil", $id_perfil, PDO::PARAM_STR);
+
+        $stmt -> execute();
+
+        return $stmt->fetch(PDO::FETCH_OBJ);
+
     }
 }

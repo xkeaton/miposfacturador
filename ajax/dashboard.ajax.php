@@ -51,6 +51,14 @@ if (isset($_POST['accion'])) {
 
             break;
 
+        case 'resumen_yusu':
+
+            $id_almacen = isset($_POST['id_almacen']) ? (int)$_POST['id_almacen'] : 1;
+            $response = DashboardModelo::mdlGetDatosResumenYusu($id_almacen);
+            echo json_encode($response);
+
+            break;
+
         default:
             # code...
             break;

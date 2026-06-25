@@ -79,16 +79,7 @@ class ClientesModelo
             $data[] = $sub_array;
         }
 
-        $stmt = Conexion::conectar()->prepare(" SELECT 
-                                                        '' as opciones,
-                                                        cli.id,
-                                                        cli.id_tipo_documento,
-                                                        td.descripcion as tipo_documento,
-                                                        cli.nro_documento,
-                                                        cli.nombres_apellidos_razon_social,
-                                                        cli.direccion,
-                                                        cli.telefono,
-                                                        case when cli.estado = 1 then 'ACTIVO' else 'INACTIVO' end as estado
+        $stmt = Conexion::conectar()->prepare(" SELECT 'X'
                                                 FROM clientes cli INNER JOIN tipo_documento td on cli.id_tipo_documento = td.id");
 
         $stmt->execute();
@@ -112,16 +103,26 @@ class ClientesModelo
 
         try {
 
-            $stmt = $dbh->prepare("INSERT INTO clientes(id_tipo_documento, nro_documento, nombres_apellidos_razon_social, direccion, telefono, estado)
-                                    VALUES(?,UPPER(?),UPPER(?),UPPER(?),UPPER(?),UPPER(?))");
+            $stmt = $dbh->prepare("INSERT INTO clientes(id_tipo_documento, 
+                                                        nro_documento, 
+                                                        nombres_apellidos_razon_social,                                                         
+                                                        direccion, 
+                                                        telefono, 
+                                                        estado)
+                                                VALUES(:id_tipo_documento, 
+                                                        :nro_documento, 
+                                                        upper(:nombres_apellidos_razon_social), 
+                                                        upper(:direccion), 
+                                                        :telefono, 
+                                                        :estado)");
             $dbh->beginTransaction();
             $stmt->execute(array(
-                $cliente['tipo_documento'],
-                $cliente['nro_documento'],
-                $cliente['nombre_cliente_razon_social'],
-                $cliente['direccion'],
-                $cliente['telefono'],
-                $cliente['estado']
+            ':id_tipo_documento' =>  $cliente['tipo_documento'],
+            ':nro_documento' => $cliente['nro_documento'],
+            ':nombres_apellidos_razon_social' => $cliente['nombre_cliente_razon_social'] ?? '',
+            ':direccion' =>  $cliente['direccion'],
+            ':telefono' =>  $cliente['telefono'],
+            ':estado' => $cliente['estado']
             ));
             $dbh->commit();
 
@@ -138,28 +139,28 @@ class ClientesModelo
 
     static public function mdlActualizarCliente($cliente)
     {
-
+        
         $dbh = Conexion::conectar();
 
         try {
 
             $stmt = $dbh->prepare("UPDATE   clientes
-                                     SET    id_tipo_documento = ?,
-                                            nro_documento = ?,
-                                            nombres_apellidos_razon_social = ?,
-                                            direccion = ?,
-                                            telefono = ?,
-                                            estado = ?
-                                    WHERE   id = ?");
+                                     SET    id_tipo_documento = :id_tipo_documento,
+                                            nro_documento = :nro_documento,
+                                            nombres_apellidos_razon_social = upper(:nombre_cliente_razon_social),
+                                            direccion = upper(:direccion),
+                                            telefono = :telefono,
+                                            estado = :estado
+                                    WHERE   id = :id_cliente");
             $dbh->beginTransaction();
             $stmt->execute(array(
-                $cliente['tipo_documento'],
-                $cliente['nro_documento'],
-                $cliente['nombre_cliente_razon_social'],
-                $cliente['direccion'],
-                $cliente['telefono'],
-                $cliente['estado'],
-                $cliente['id_cliente']
+                ':id_tipo_documento' => $cliente['tipo_documento'],
+                ':nro_documento' => $cliente['nro_documento'],
+                ':nombre_cliente_razon_social' => $cliente['nombre_cliente_razon_social'] ?? '',
+                ':direccion' => $cliente['direccion'],
+                ':telefono' => $cliente['telefono'],
+                ':estado' => $cliente['estado'],
+                ':id_cliente' => $cliente['id_cliente']
             ));
             $dbh->commit();
 
@@ -212,5 +213,97 @@ class ClientesModelo
         return $stmt->fetch(PDO::FETCH_NAMED);
     }
 
-    
+    static public function mdlObtenerClientePorNroDocumento($nro_documento)
+    {
+
+        $stmt = Conexion::conectar()->prepare(" SELECT id, 
+                                                        id_tipo_documento, 
+                                                        nro_documento,                                                         
+                                                        cli.nombres_apellidos_razon_social as razonSocial,
+                                                         direccion, 
+                                                         telefono, 
+                                                         estado
+                                            FROM clientes cli 
+                                            WHERE cli.nro_documento = :nro_documento");
+
+        $stmt->bindParam(":nro_documento", $nro_documento, PDO::PARAM_STR);
+
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_NAMED);
+    }
+
+    static public function mdlAutocompleteClientes($dato_busqueda)
+    {
+
+        // $dato_busqueda = $_GET['term'];
+
+        $stmt = Conexion::conectar()->prepare("SELECT 
+                                            c.id, 
+                                            c.id_tipo_documento, 
+                                            c.nro_documento, 
+                                            c.nombres_apellidos_razon_social, 
+                                            c.direccion, 
+                                            c.telefono, 
+                                            c.estado
+                                        FROM 
+                                            clientes c                                        
+                                        WHERE  (c.nombres_apellidos_razon_social  LIKE CONCAT('%', :dato_buscado, '%') 
+                                                or c.nro_documento  LIKE CONCAT('%', :dato_buscado, '%'))                                        
+                                        LIMIT 0,5");
+
+        $stmt->bindParam(":dato_buscado", $dato_busqueda, PDO::PARAM_STR);
+        $stmt->execute();
+
+        $clientes = $stmt->fetchAll();
+
+        $clientData = array();
+
+        foreach ($clientes as $row) {
+
+            $id_tipo_documento = $row['id_tipo_documento'];
+            $nro_documento = $row['nro_documento'];
+            $razon_social = $row['nombres_apellidos_razon_social'];
+            $direccion = $row['direccion'];
+            $telefono = $row['telefono'];
+            
+            // <a href="javascript:void(0);" class="d-flex border border-secondary border-left-0 border-right-0 border-top-0" style="width:100% !important;">
+            $data["id"] = $nro_documento;
+            $data["value"] = $nro_documento . ' - ' . $razon_social;
+            $data["label"] = '<div class="row mx-0 border border-secondary border-left-0 border-right-0 border-top-0" style="z-index:100;">
+                            <div class="col-lg-12 d-flex flex-row align-items-center">
+                                <div class="d-flex flex-column ml-3 text-sm">
+                                    <div class="text-sm">N° Doc: ' . $nro_documento . ' - Cliente: ' . $razon_social . '</div> 
+                                </div>
+                            </div>
+                        </div>';
+
+            array_push($clientData, $data);
+        }
+
+        return $clientData;
+
+    }
+
+    static public function mdlListarClientesPos($term)
+    {
+        $stmt = Conexion::conectar()->prepare("SELECT 
+                                            c.id, 
+                                            c.id_tipo_documento, 
+                                            c.nro_documento, 
+                                            c.nombres_apellidos_razon_social, 
+                                            c.direccion, 
+                                            c.telefono, 
+                                            c.estado
+                                        FROM 
+                                            clientes c                                        
+                                        WHERE (c.nombres_apellidos_razon_social LIKE CONCAT('%', :term, '%') 
+                                               OR c.nro_documento LIKE CONCAT('%', :term, '%')
+                                               OR c.telefono LIKE CONCAT('%', :term, '%'))
+                                        ORDER BY c.id DESC");
+
+        $stmt->bindParam(":term", $term, PDO::PARAM_STR);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
+

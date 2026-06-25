@@ -1,5 +1,5 @@
 <?php
-
+date_default_timezone_set('America/Lima');
 require_once "../modelos/arqueo_caja.modelo.php";
 require "../vendor/autoload.php";
 
@@ -17,6 +17,14 @@ if (isset($_POST["accion"])) {
         case 'listar_arqueos_por_usuario':
 
             $response = ArqueoCajaModelo::mdlObtenerArqueoPorUsuario();
+
+            echo json_encode($response, JSON_UNESCAPED_UNICODE);
+
+            break;
+
+        case 'listar_arqueos':
+
+            $response = ArqueoCajaModelo::mdlObtenerArqueos($_POST["usuario"], $_POST["fecha_desde"], $_POST["fecha_hasta"]);
 
             echo json_encode($response, JSON_UNESCAPED_UNICODE);
 
@@ -111,8 +119,10 @@ if (isset($_GET["accion"])) {
         case 'generar_ticket_arqueo':
 
             $id_arqueo_caja = $_GET["id_arqueo_caja"];
-            $empresa = ArqueoCajaModelo::mdlObtenerDatosEmisor(1);
-            $arqueo_caja = ArqueoCajaModelo::mdlObtenerArqueoPorId($id_arqueo_caja);
+            $id_usuario = isset($_GET["id_usuario_arqueo"]) && $_GET["id_usuario_arqueo"] > 0 ? $_GET["id_usuario_arqueo"] : 0;
+
+            $empresa = ArqueoCajaModelo::mdlObtenerDatosEmisor();
+            $arqueo_caja = ArqueoCajaModelo::mdlObtenerArqueoPorId($id_arqueo_caja, $id_usuario);
             // $compra = ComprasModelo::mdlImpresionObtenerCompraPorId($_GET["id_compra"]);
             // $detalle_compra = ComprasModelo::mdlObtenerDetalleCompraPorId($_GET["id_compra"]);
             // $datos_emisor = VentasModelo::mdlObtenerDatosEmisor(1);
@@ -127,7 +137,7 @@ if (isset($_GET["accion"])) {
 
 
             $dompdf->loadHtml($html);
-            $dompdf->set_paper(array(0, 0, 260, 1000), 'portrait');
+            $dompdf->set_paper(array(0, 0, 260, 580), 'portrait');
             $dompdf->render();
             $frame = $dompdf->getTree()->get_frame(0);
             $height = $frame->get_style()->height;

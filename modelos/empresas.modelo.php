@@ -166,10 +166,6 @@ class EmpresasModelo
                                                         ubigeo, 
                                                         certificado_digital,
                                                         clave_certificado,
-                                                        usuario_sol, 
-                                                        clave_sol, 
-                                                        es_principal,
-                                                        fact_bol_defecto,
                                                         logo,
                                                         estado)
                                     VALUES(:genera_fact_electronica,
@@ -186,10 +182,6 @@ class EmpresasModelo
                                             :ubigeo, 
                                             :certificado_digital,
                                             :clave_certificado,
-                                            :usuario_sol, 
-                                            :clave_sol, 
-                                            :es_principal,
-                                            :fact_bol_defecto,
                                             :logo,
                                             :estado)");
             $dbh->beginTransaction();
@@ -197,7 +189,7 @@ class EmpresasModelo
                 ':genera_fact_electronica' => $empresa['rb_genera_facturacion'],
                 ':razon_social' => $empresa['razon_social'],
                 ':nombre_comercial' => $empresa['nombre_comercial'],
-                ':id_tipo_documento' => $empresa['tipo_documento'],
+                ':id_tipo_documento' => 6,
                 ':ruc' => $empresa['nro_documento'],
                 ':direccion' => $empresa['direccion'],
                 ':email' => $empresa['email'],
@@ -206,12 +198,8 @@ class EmpresasModelo
                 ':departamento' => $empresa['departamento'],
                 ':distrito' => $empresa['distrito'],
                 ':ubigeo' => $empresa['ubigeo'],
-                ':certificado_digital' => strtolower($certificado["nombre_archivo"]),
-                ':clave_certificado' => $empresa['clave_certificado'],
-                ':usuario_sol' => $empresa['usuario_sol'],
-                ':clave_sol' => $empresa['clave_sol'],
-                ':es_principal' => $empresa['rb_empresa_principal'],
-                ':fact_bol_defecto' => $empresa['rb_fact_bol_defecto'],
+                ':certificado_digital' => isset($certificado["nombre_archivo"]) ? $certificado["nombre_archivo"] : '',
+                ':clave_certificado' => isset( $empresa['clave_certificado']) ? $empresa['clave_certificado']:'',                
                 ':logo' => $imagen_logo["nuevoNombre"] ?? '',
                 ':estado' => $empresa['estado']
             ));
@@ -272,28 +260,6 @@ class EmpresasModelo
 
             $logo_actual = $datos["logo"];
 
-            // SI SE MARCO COMO PRINCIPAL, SE DEBEN DESMARCAR TODAS LAS DEMAS EMPRESAS
-
-            if ($empresa['rb_empresa_principal'] == "1") {
-
-                $stmt = $dbh->prepare("UPDATE   empresas
-                                     SET    es_principal = :es_principal");
-                $dbh->beginTransaction();
-                $stmt->execute(array(
-                    ':es_principal' => 2
-                ));
-                $dbh->commit();
-            }
-            if ($empresa['rb_fact_bol_defecto'] == "1") {
-
-                $stmt = $dbh->prepare("UPDATE   empresas
-                                        SET    fact_bol_defecto = :fact_bol_defecto");
-                $dbh->beginTransaction();
-                $stmt->execute(array(
-                    ':fact_bol_defecto' => 2
-                ));
-                $dbh->commit();
-            }
 
             $stmt = $dbh->prepare("UPDATE   empresas
                                      SET    genera_fact_electronica = ?,
@@ -310,11 +276,7 @@ class EmpresasModelo
                                             ubigeo = ?, 
                                             certificado_digital = ?,
                                             clave_certificado = ?,
-                                            usuario_sol = ?, 
-                                            clave_sol = ?, 
-                                            es_principal = ?,
-                                            fact_bol_defecto = ?,
-                                            logo = ?,
+                                            logo = ?,                                            
                                             estado = ?
                                     WHERE   id_empresa = ?");
             $dbh->beginTransaction();
@@ -322,7 +284,7 @@ class EmpresasModelo
                 $empresa['rb_genera_facturacion'],
                 $empresa['razon_social'],
                 $empresa['nombre_comercial'],
-                $empresa['tipo_documento'],
+                6,
                 $empresa['nro_documento'],
                 $empresa['direccion'],
                 $empresa['email'],
@@ -331,13 +293,9 @@ class EmpresasModelo
                 $empresa['departamento'],
                 $empresa['distrito'],
                 $empresa['ubigeo'],
-                strtolower($certificado['nombre_archivo']) ?? strtolower($certificado_actual),
-                $empresa['clave_certificado'] ?? $clave_certificado_actual,
-                $empresa['usuario_sol'],
-                $empresa['clave_sol'],
-                $empresa['rb_empresa_principal'],
-                $empresa['rb_fact_bol_defecto'],
-                $imagen_logo["nuevoNombre"] ?? $logo_actual,
+                isset($certificado['nombre_archivo']) ? strtolower($certificado['nombre_archivo']) : '',
+                isset($empresa['clave_certificado']) ? $empresa['clave_certificado'] : '',                
+                $imagen_logo["nuevoNombre"] ?? $logo_actual,                
                 $empresa['estado'],
                 $empresa['id_empresa']
             ));
@@ -415,6 +373,9 @@ class EmpresasModelo
                                                         es_principal,
                                                         fact_bol_defecto,
                                                         logo,
+                                                        bbva_cci,
+                                                        bcp_cci,
+                                                        yape,
                                                         estado
                                                 FROM empresas
                                                 where id_empresa = :id_empresa");
@@ -428,7 +389,7 @@ class EmpresasModelo
 
         $stmt = Conexion::conectar()->prepare("SELECT id_empresa                                                        
                                                 FROM empresas
-                                                WHERE fact_bol_defecto = 1
+                                                WHERE estado = 1
                                                 LIMIT 1");
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_NAMED);
@@ -477,10 +438,31 @@ class EmpresasModelo
     static public function mdlObtenerEmpresaPrincipal()
     {
 
-        $stmt = Conexion::conectar()->prepare("SELECT *                                                        
-                                                FROM empresas
-                                                WHERE es_principal = 1
-                                                LIMIT 1");
+        $stmt = Conexion::conectar()->prepare("SELECT id_empresa,
+                                                        genera_fact_electronica,
+                                                        razon_social,
+                                                        nombre_comercial,
+                                                        id_tipo_documento,
+                                                        ruc,
+                                                        direccion,
+                                                        simbolo_moneda,
+                                                        email,
+                                                        telefono,
+                                                        provincia,
+                                                        departamento,
+                                                        distrito,
+                                                        ubigeo,
+                                                        certificado_digital,
+                                                        clave_certificado,
+                                                        usuario_sol,
+                                                        clave_sol,
+                                                        logo,
+                                                        estado,
+                                                        production,
+                                                        client_id,
+                                                        client_secret,
+                                                        certificado_digital_pem
+                                                FROM empresas");
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_NAMED);
     }

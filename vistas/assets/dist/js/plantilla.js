@@ -1,8 +1,8 @@
-$(function() {
+$(function () {
 	validateLoginUsuarioBS4();
 })
 
-function fncSweetAlert(type, text, url){
+function fncSweetAlert(type, text, url) {
 
 	switch (type) {
 
@@ -12,96 +12,96 @@ function fncSweetAlert(type, text, url){
 
 		case "error":
 
-		if(url == null){
+			if (url == null) {
 
-		  	Swal.fire({
-	            icon: 'error',
-	            title: 'Error',
-	            text: text
-	        }) 
+				Swal.fire({
+					icon: 'error',
+					title: 'Error',
+					text: text
+				})
 
-	    }else{
+			} else {
 
-	    	Swal.fire({
-	            icon: 'error',
-	            title: 'Error',
-	            text: text
-	        }).then((result) => {
+				Swal.fire({
+					icon: 'error',
+					title: 'Error',
+					text: text
+				}).then((result) => {
 
-    	 		if (result.value) { 
+					if (result.value) {
 
-    	 			window.open(url, "_top");
+						window.open(url, "_top");
 
-    	 		}
+					}
 
-	        }) 
+				})
 
-	    }
+			}
 
-        break;
+			break;
 
-        /*=============================================
+		/*=============================================
 		Cuando es correcto
 		=============================================*/
 
 		case "success":
 
-		if(url == null){
+			if (url == null) {
 
-		  	Swal.fire({
-	            icon: 'success',
-	            title: 'Success',
-	            text: text,
-				allowOutsideClick: false,
-    			allowEscapeKey: false
-	        }) 
+				Swal.fire({
+					icon: 'success',
+					title: 'Success',
+					text: text,
+					allowOutsideClick: false,
+					allowEscapeKey: false
+				})
 
-	    }else{
+			} else {
 
-	    	Swal.fire({
-	            icon: 'success',
-	            title: 'Confirmación',
-	            text: text,
-				allowOutsideClick: false,
-    			allowEscapeKey: false
-	        }).then((result) => {
+				Swal.fire({
+					icon: 'success',
+					title: 'Confirmación',
+					text: text,
+					allowOutsideClick: false,
+					allowEscapeKey: false
+				}).then((result) => {
 
-    	 		if (result.value) { 
+					if (result.value) {
 
-    	 			window.open(url, "_top");
+						window.open(url, "_top");
 
-    	 		}
+					}
 
-	        }) 
+				})
 
-	    }
+			}
 
-        break;
+			break;
 
-        /*=============================================
+		/*=============================================
 		Cuando estamos precargando
 		=============================================*/
 
 		case "loading":
 
-		  Swal.fire({
-            allowOutsideClick: false,
-            icon: 'info',
-            text:text
-          })
-          Swal.showLoading()
+			Swal.fire({
+				allowOutsideClick: false,
+				icon: 'info',
+				text: text
+			})
+			Swal.showLoading()
 
-        break;  
+			break;
 
-        /*=============================================
+		/*=============================================
 		Cuando necesitamos cerrar la alerta suave
 		=============================================*/
 
 		case "close":
 
-		 	Swal.close()
-		 	
-		break;
+			Swal.close()
+
+			break;
 
 
 
@@ -109,66 +109,66 @@ function fncSweetAlert(type, text, url){
 
 }
 
-function validateLoginUsuarioBS4(){
+function validateLoginUsuarioBS4() {
 
-	(function() {
-	  'use strict';
-	  window.addEventListener('load', function() {
-		// Get the forms we want to add validation styles to
-		var forms = document.getElementsByClassName('needs-validation-login');
-		// Loop over them and prevent submission
-		var validation = Array.prototype.filter.call(forms, function(form) {
-		  form.addEventListener('submit', function(event) {
-			if (form.checkValidity() === false) {
-			  event.preventDefault();
-			  event.stopPropagation();
-			}
-			form.classList.add('was-validated');
-									 
-		  }, false);
-		});
-	  }, false);
+	(function () {
+		'use strict';
+		window.addEventListener('load', function () {
+			// Get the forms we want to add validation styles to
+			var forms = document.getElementsByClassName('needs-validation-login');
+			// Loop over them and prevent submission
+			var validation = Array.prototype.filter.call(forms, function (form) {
+				form.addEventListener('submit', function (event) {
+					if (form.checkValidity() === false) {
+						event.preventDefault();
+						event.stopPropagation();
+					}
+					form.classList.add('was-validated');
+
+				}, false);
+			});
+		}, false);
 	})();
 
 }
 
-function mensajeToast(tipo_mensaje = 'error',mensaje){
-	
+function mensajeToast(tipo_mensaje = 'error', mensaje) {
+
 	toastr.options.progressBar = true;
 	toastr.options.timeOut = 3000; // How long the toast will display without user interaction
-	toastr.options.extendedTimeOut = 3000; 
+	toastr.options.extendedTimeOut = 3000;
 	toastr.options.positionClass = 'toast-top-right';
 
-	if(tipo_mensaje == 'error'){
+	if (tipo_mensaje == 'error') {
 		toastr.error(mensaje);
 	}
 
-	if(tipo_mensaje == 'success'){
+	if (tipo_mensaje == 'success') {
 		toastr.success(mensaje);
 	}
 
-	if(tipo_mensaje == 'warning'){
+	if (tipo_mensaje == 'warning') {
 		toastr.warning(mensaje);
 	}
 
-	if(tipo_mensaje == 'info'){
+	if (tipo_mensaje == 'info') {
 		toastr.info(mensaje);
 	}
-	
-	
+
+
 
 }
 
 function ajustarHeadersDataTables(element) {
 
-	var observer = window.ResizeObserver ? new ResizeObserver(function(entries) {
-		entries.forEach(function(entry) {
+	var observer = window.ResizeObserver ? new ResizeObserver(function (entries) {
+		entries.forEach(function (entry) {
 			$(entry.target).DataTable().columns.adjust();
 		});
 	}) : null;
 
 	// Function to add a datatable to the ResizeObserver entries array
-	resizeHandler = function($table) {
+	resizeHandler = function ($table) {
 		if (observer)
 			observer.observe($table[0]);
 	};
@@ -176,4 +176,27 @@ function ajustarHeadersDataTables(element) {
 	// Initiate additional resize handling on datatable
 	resizeHandler(element);
 
+}
+
+function fnc_ValidarSesion() {
+
+	var formaData = new FormData();
+	formaData.append('accion', 'validar_sesion');
+
+	$response = SolicitudAjax('ajax/auth.ajax.php', 'POST', formaData);
+
+	if ($response.message == "no_session") {
+
+		// Swal.fire({
+		// 	position: 'top-center',
+		// 	icon: 'error',
+		// 	title: 'La sesión ha expirado, Inicie Sesion nuevamente',
+		// 	showConfirmButton: true
+		// })
+
+		window.location.href = 'http://localhost/miposfacturador/?cerrar_sesion=1';
+		exit;
+	}
+
+	return true;
 }

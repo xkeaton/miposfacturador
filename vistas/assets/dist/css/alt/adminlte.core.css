@@ -11112,18 +11112,18 @@ a.text-dark:hover, a.text-dark:focus {
   --pink: #e83e8c;
   --red: #e74c3c;
   --orange: #fd7e14;
-  --yellow: #f39c12;
+  --yellow: #17202a;
   --green: #00bc8c;
   --teal: #20c997;
-  --cyan: #3498db;
+  --cyan: #17202a;
   --white: #fff;
   --gray: #6c757d;
   --gray-dark: #343a40;
   --primary: #3f6791;
   --secondary: #6c757d;
   --success: #00bc8c;
-  --info: #3498db;
-  --warning: #f39c12;
+  --info: #17202a;
+  --warning: #17202a;
   --danger: #e74c3c;
   --light: #f8f9fa;
   --dark: #343a40;
@@ -14427,24 +14427,24 @@ body:not(.layout-fixed) .main-sidebar .sidebar {
 
 .dark-mode .sidebar-dark-info .nav-sidebar > .nav-item > .nav-link.active,
 .dark-mode .sidebar-light-info .nav-sidebar > .nav-item > .nav-link.active {
-  background-color: #3498db;
+  background-color: #17202a;
   color: #fff;
 }
 
 .dark-mode .sidebar-dark-info .nav-sidebar.nav-legacy > .nav-item > .nav-link.active,
 .dark-mode .sidebar-light-info .nav-sidebar.nav-legacy > .nav-item > .nav-link.active {
-  border-color: #3498db;
+  border-color: #17202a;
 }
 
 .dark-mode .sidebar-dark-warning .nav-sidebar > .nav-item > .nav-link.active,
 .dark-mode .sidebar-light-warning .nav-sidebar > .nav-item > .nav-link.active {
-  background-color: #f39c12;
+  background-color: #17202a;
   color: #1f2d3d;
 }
 
 .dark-mode .sidebar-dark-warning .nav-sidebar.nav-legacy > .nav-item > .nav-link.active,
 .dark-mode .sidebar-light-warning .nav-sidebar.nav-legacy > .nav-item > .nav-link.active {
-  border-color: #f39c12;
+  border-color: #17202a;
 }
 
 .dark-mode .sidebar-dark-danger .nav-sidebar > .nav-item > .nav-link.active,
@@ -14614,13 +14614,13 @@ body:not(.layout-fixed) .main-sidebar .sidebar {
 
 .dark-mode .sidebar-dark-yellow .nav-sidebar > .nav-item > .nav-link.active,
 .dark-mode .sidebar-light-yellow .nav-sidebar > .nav-item > .nav-link.active {
-  background-color: #f39c12;
+  background-color: #17202a;
   color: #1f2d3d;
 }
 
 .dark-mode .sidebar-dark-yellow .nav-sidebar.nav-legacy > .nav-item > .nav-link.active,
 .dark-mode .sidebar-light-yellow .nav-sidebar.nav-legacy > .nav-item > .nav-link.active {
-  border-color: #f39c12;
+  border-color: #17202a;
 }
 
 .dark-mode .sidebar-dark-green .nav-sidebar > .nav-item > .nav-link.active,
@@ -14647,13 +14647,13 @@ body:not(.layout-fixed) .main-sidebar .sidebar {
 
 .dark-mode .sidebar-dark-cyan .nav-sidebar > .nav-item > .nav-link.active,
 .dark-mode .sidebar-light-cyan .nav-sidebar > .nav-item > .nav-link.active {
-  background-color: #3498db;
+  background-color: #17202a;
   color: #fff;
 }
 
 .dark-mode .sidebar-dark-cyan .nav-sidebar.nav-legacy > .nav-item > .nav-link.active,
 .dark-mode .sidebar-light-cyan .nav-sidebar.nav-legacy > .nav-item > .nav-link.active {
-  border-color: #3498db;
+  border-color: #17202a;
 }
 
 .dark-mode .sidebar-dark-white .nav-sidebar > .nav-item > .nav-link.active,
@@ -19316,7 +19316,7 @@ body.text-sm .control-sidebar {
 }
 
 .dark-mode .navbar-info {
-  background-color: #3498db;
+  background-color: #17202a;
   color: #fff;
 }
 
@@ -19429,7 +19429,7 @@ body.text-sm .control-sidebar {
 }
 
 .dark-mode .navbar-warning {
-  background-color: #f39c12;
+  background-color: #17202a;
   color: #1f2d3d;
 }
 
@@ -21011,7 +21011,7 @@ body.text-sm .control-sidebar {
 }
 
 .dark-mode .navbar-yellow {
-  background-color: #f39c12;
+  background-color: #17202a;
   color: #1f2d3d;
 }
 
@@ -21350,7 +21350,7 @@ body.text-sm .control-sidebar {
 }
 
 .dark-mode .navbar-cyan {
-  background-color: #3498db;
+  background-color: #17202a;
   color: #fff;
 }
 
@@ -23281,7 +23281,7 @@ blockquote.quote-gray-dark h6 {
 }
 
 .dark-mode .text-yellow {
-  color: #f39c12 !important;
+  color: #17202a !important;
 }
 
 .dark-mode .text-green {
@@ -23293,7 +23293,7 @@ blockquote.quote-gray-dark h6 {
 }
 
 .dark-mode .text-cyan {
-  color: #3498db !important;
+  color: #17202a !important;
 }
 
 .dark-mode .text-white {
@@ -26532,7 +26532,7 @@ a.text-muted:hover {
 }
 
 .dark-mode .bg-info {
-  background-color: #3498db !important;
+  background-color: #17202a !important;
 }
 
 .dark-mode .bg-info,
@@ -26552,7 +26552,7 @@ a.text-muted:hover {
 }
 
 .dark-mode .bg-warning {
-  background-color: #f39c12 !important;
+  background-color: #17202a !important;
 }
 
 .dark-mode .bg-warning,
@@ -26872,7 +26872,7 @@ a.text-muted:hover {
 }
 
 .dark-mode .bg-yellow {
-  background-color: #f39c12 !important;
+  background-color: #17202a !important;
 }
 
 .dark-mode .bg-yellow,
@@ -26932,7 +26932,7 @@ a.text-muted:hover {
 }
 
 .dark-mode .bg-cyan {
-  background-color: #3498db !important;
+  background-color: #17202a !important;
 }
 
 .dark-mode .bg-cyan,
@@ -27078,7 +27078,7 @@ a.text-muted:hover {
 }
 
 .dark-mode .bg-gradient-info {
-  background: #3498db linear-gradient(180deg, #52a7e0, #3498db) repeat-x !important;
+  background: #17202a linear-gradient(180deg, #52a7e0, #17202a) repeat-x !important;
   color: #fff;
 }
 
@@ -27088,19 +27088,19 @@ a.text-muted:hover {
 }
 
 .dark-mode .bg-gradient-info.btn:hover {
-  background: #3498db linear-gradient(180deg, #4497ce, #2384c6) repeat-x !important;
+  background: #17202a linear-gradient(180deg, #4497ce, #2384c6) repeat-x !important;
   border-color: #217dbb;
   color: #ececec;
 }
 
 .dark-mode .bg-gradient-info.btn:not(:disabled):not(.disabled):active, .dark-mode .bg-gradient-info.btn:not(:disabled):not(.disabled).active, .dark-mode .bg-gradient-info.btn:active, .dark-mode .bg-gradient-info.btn.active {
-  background: #3498db linear-gradient(180deg, #4291c5, #217dbb) repeat-x !important;
+  background: #17202a linear-gradient(180deg, #4291c5, #217dbb) repeat-x !important;
   border-color: #1f76b0;
   color: #fff;
 }
 
 .dark-mode .bg-gradient-warning {
-  background: #f39c12 linear-gradient(180deg, #f5ab36, #f39c12) repeat-x !important;
+  background: #17202a linear-gradient(180deg, #f5ab36, #17202a) repeat-x !important;
   color: #1f2d3d;
 }
 
@@ -27110,13 +27110,13 @@ a.text-muted:hover {
 }
 
 .dark-mode .bg-gradient-warning.btn:hover {
-  background: #f39c12 linear-gradient(180deg, #da982f, #d4860b) repeat-x !important;
+  background: #17202a linear-gradient(180deg, #da982f, #d4860b) repeat-x !important;
   border-color: #c87f0a;
   color: #121a24;
 }
 
 .dark-mode .bg-gradient-warning.btn:not(:disabled):not(.disabled):active, .dark-mode .bg-gradient-warning.btn:not(:disabled):not(.disabled).active, .dark-mode .bg-gradient-warning.btn:active, .dark-mode .bg-gradient-warning.btn.active {
-  background: #f39c12 linear-gradient(180deg, #d0922f, #c87f0a) repeat-x !important;
+  background: #17202a linear-gradient(180deg, #d0922f, #c87f0a) repeat-x !important;
   border-color: #bc770a;
   color: #fff;
 }
@@ -27452,7 +27452,7 @@ a.text-muted:hover {
 }
 
 .dark-mode .bg-gradient-yellow {
-  background: #f39c12 linear-gradient(180deg, #f5ab36, #f39c12) repeat-x !important;
+  background: #17202a linear-gradient(180deg, #f5ab36, #17202a) repeat-x !important;
   color: #1f2d3d;
 }
 
@@ -27462,13 +27462,13 @@ a.text-muted:hover {
 }
 
 .dark-mode .bg-gradient-yellow.btn:hover {
-  background: #f39c12 linear-gradient(180deg, #da982f, #d4860b) repeat-x !important;
+  background: #17202a linear-gradient(180deg, #da982f, #d4860b) repeat-x !important;
   border-color: #c87f0a;
   color: #121a24;
 }
 
 .dark-mode .bg-gradient-yellow.btn:not(:disabled):not(.disabled):active, .dark-mode .bg-gradient-yellow.btn:not(:disabled):not(.disabled).active, .dark-mode .bg-gradient-yellow.btn:active, .dark-mode .bg-gradient-yellow.btn.active {
-  background: #f39c12 linear-gradient(180deg, #d0922f, #c87f0a) repeat-x !important;
+  background: #17202a linear-gradient(180deg, #d0922f, #c87f0a) repeat-x !important;
   border-color: #bc770a;
   color: #fff;
 }
@@ -27518,7 +27518,7 @@ a.text-muted:hover {
 }
 
 .dark-mode .bg-gradient-cyan {
-  background: #3498db linear-gradient(180deg, #52a7e0, #3498db) repeat-x !important;
+  background: #17202a linear-gradient(180deg, #52a7e0, #17202a) repeat-x !important;
   color: #fff;
 }
 
@@ -27528,13 +27528,13 @@ a.text-muted:hover {
 }
 
 .dark-mode .bg-gradient-cyan.btn:hover {
-  background: #3498db linear-gradient(180deg, #4497ce, #2384c6) repeat-x !important;
+  background: #17202a linear-gradient(180deg, #4497ce, #2384c6) repeat-x !important;
   border-color: #217dbb;
   color: #ececec;
 }
 
 .dark-mode .bg-gradient-cyan.btn:not(:disabled):not(.disabled):active, .dark-mode .bg-gradient-cyan.btn:not(:disabled):not(.disabled).active, .dark-mode .bg-gradient-cyan.btn:active, .dark-mode .bg-gradient-cyan.btn.active {
-  background: #3498db linear-gradient(180deg, #4291c5, #217dbb) repeat-x !important;
+  background: #17202a linear-gradient(180deg, #4291c5, #217dbb) repeat-x !important;
   border-color: #1f76b0;
   color: #fff;
 }
@@ -27821,7 +27821,7 @@ a.text-muted:hover {
 .dark-mode .accent-info .btn-link,
 .dark-mode .accent-info a:not(.dropdown-item):not(.btn-app):not(.nav-link):not(.brand-link):not(.page-link):not(.btn),
 .dark-mode .accent-info .nav-tabs .nav-link {
-  color: #3498db;
+  color: #17202a;
 }
 
 .dark-mode .accent-info .btn-link:hover,
@@ -27831,12 +27831,12 @@ a.text-muted:hover {
 }
 
 .dark-mode .accent-info .dropdown-item:active, .dark-mode .accent-info .dropdown-item.active {
-  background-color: #3498db;
+  background-color: #17202a;
   color: #fff;
 }
 
 .dark-mode .accent-info .custom-control-input:checked ~ .custom-control-label::before {
-  background-color: #3498db;
+  background-color: #17202a;
   border-color: #196090;
 }
 
@@ -27852,13 +27852,13 @@ a.text-muted:hover {
 }
 
 .dark-mode .accent-info .page-item .page-link {
-  color: #3498db;
+  color: #17202a;
 }
 
 .dark-mode .accent-info .page-item.active a,
 .dark-mode .accent-info .page-item.active .page-link {
-  background-color: #3498db;
-  border-color: #3498db;
+  background-color: #17202a;
+  border-color: #17202a;
   color: #fff;
 }
 
@@ -27892,7 +27892,7 @@ a.text-muted:hover {
 .dark-mode .accent-warning .btn-link,
 .dark-mode .accent-warning a:not(.dropdown-item):not(.btn-app):not(.nav-link):not(.brand-link):not(.page-link):not(.btn),
 .dark-mode .accent-warning .nav-tabs .nav-link {
-  color: #f39c12;
+  color: #17202a;
 }
 
 .dark-mode .accent-warning .btn-link:hover,
@@ -27902,12 +27902,12 @@ a.text-muted:hover {
 }
 
 .dark-mode .accent-warning .dropdown-item:active, .dark-mode .accent-warning .dropdown-item.active {
-  background-color: #f39c12;
+  background-color: #17202a;
   color: #1f2d3d;
 }
 
 .dark-mode .accent-warning .custom-control-input:checked ~ .custom-control-label::before {
-  background-color: #f39c12;
+  background-color: #17202a;
   border-color: #976008;
 }
 
@@ -27923,13 +27923,13 @@ a.text-muted:hover {
 }
 
 .dark-mode .accent-warning .page-item .page-link {
-  color: #f39c12;
+  color: #17202a;
 }
 
 .dark-mode .accent-warning .page-item.active a,
 .dark-mode .accent-warning .page-item.active .page-link {
-  background-color: #f39c12;
-  border-color: #f39c12;
+  background-color: #17202a;
+  border-color: #17202a;
   color: #fff;
 }
 
@@ -29060,7 +29060,7 @@ a.text-muted:hover {
 .dark-mode .accent-yellow .btn-link,
 .dark-mode .accent-yellow a:not(.dropdown-item):not(.btn-app):not(.nav-link):not(.brand-link):not(.page-link):not(.btn),
 .dark-mode .accent-yellow .nav-tabs .nav-link {
-  color: #f39c12;
+  color: #17202a;
 }
 
 .dark-mode .accent-yellow .btn-link:hover,
@@ -29070,12 +29070,12 @@ a.text-muted:hover {
 }
 
 .dark-mode .accent-yellow .dropdown-item:active, .dark-mode .accent-yellow .dropdown-item.active {
-  background-color: #f39c12;
+  background-color: #17202a;
   color: #1f2d3d;
 }
 
 .dark-mode .accent-yellow .custom-control-input:checked ~ .custom-control-label::before {
-  background-color: #f39c12;
+  background-color: #17202a;
   border-color: #976008;
 }
 
@@ -29091,13 +29091,13 @@ a.text-muted:hover {
 }
 
 .dark-mode .accent-yellow .page-item .page-link {
-  color: #f39c12;
+  color: #17202a;
 }
 
 .dark-mode .accent-yellow .page-item.active a,
 .dark-mode .accent-yellow .page-item.active .page-link {
-  background-color: #f39c12;
-  border-color: #f39c12;
+  background-color: #17202a;
+  border-color: #17202a;
   color: #fff;
 }
 
@@ -29273,7 +29273,7 @@ a.text-muted:hover {
 .dark-mode .accent-cyan .btn-link,
 .dark-mode .accent-cyan a:not(.dropdown-item):not(.btn-app):not(.nav-link):not(.brand-link):not(.page-link):not(.btn),
 .dark-mode .accent-cyan .nav-tabs .nav-link {
-  color: #3498db;
+  color: #17202a;
 }
 
 .dark-mode .accent-cyan .btn-link:hover,
@@ -29283,12 +29283,12 @@ a.text-muted:hover {
 }
 
 .dark-mode .accent-cyan .dropdown-item:active, .dark-mode .accent-cyan .dropdown-item.active {
-  background-color: #3498db;
+  background-color: #17202a;
   color: #fff;
 }
 
 .dark-mode .accent-cyan .custom-control-input:checked ~ .custom-control-label::before {
-  background-color: #3498db;
+  background-color: #17202a;
   border-color: #196090;
 }
 
@@ -29304,13 +29304,13 @@ a.text-muted:hover {
 }
 
 .dark-mode .accent-cyan .page-item .page-link {
-  color: #3498db;
+  color: #17202a;
 }
 
 .dark-mode .accent-cyan .page-item.active a,
 .dark-mode .accent-cyan .page-item.active .page-link {
-  background-color: #3498db;
-  border-color: #3498db;
+  background-color: #17202a;
+  border-color: #17202a;
   color: #fff;
 }
 

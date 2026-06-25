@@ -134,6 +134,7 @@ function validateJS(event, type) {
 
         formData.append('accion', 'validar_codigo_tipo_afectacion');
         formData.append('codigo_tipo_afectacion', event.target.value);
+        formData.append('id_tipo_afectacion', event.target.attributes['id-tipo-afectacion'].value);
         response = SolicitudAjax('ajax/tipo_afectacion_igv.ajax.php', 'POST', formData);
 
         if(response['existe'] > 0){
@@ -491,4 +492,33 @@ function validarFormulario(needs_validation) {
 
     return form_validate;
 
+}
+
+function ajustarHeadersDataTables(element) {
+
+    var observer = window.ResizeObserver ? new ResizeObserver(function(entries) {
+        entries.forEach(function(entry) {
+            $(entry.target).DataTable().columns.adjust();
+        });
+    }) : null;
+
+    // Function to add a datatable to the ResizeObserver entries array
+    resizeHandler = function($table) {
+        if (observer)
+            observer.observe($table[0]);
+    };
+
+    // Initiate additional resize handling on datatable
+    resizeHandler(element);
+
+}
+
+function fnc_MostrarLoader() {
+    $(".loading").removeClass('d-none');
+    $(".loading").addClass('d-block');
+}
+
+function fnc_OcultarLoader() {
+    $(".loading").removeClass('d-block');
+    $(".loading").addClass('d-none')
 }

@@ -148,7 +148,7 @@ array (
   'violet' => '#EE82EE',
   'wheat' => '#F5DEB3',
   'white' => '#FFFFFF',
-  'whitesmoke' => '#F5F5F5',
+  'whitesmoke' => '#17202a',
   'yellow' => '#FFFF00',
   'yellowgreen' => '#9ACD32'
 )

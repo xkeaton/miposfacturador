@@ -535,7 +535,7 @@ class Style
         'tomato'               => '#ff6347',
         'violet'               => '#ee82ee',
         'wheat'                => '#f5deb3',
-        'whitesmoke'           => '#f5f5f5',
+        'whitesmoke'           => '#17202a',
         'yellowgreen'          => '#9acd32',
     );
 }

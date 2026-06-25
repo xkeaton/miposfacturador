@@ -138,6 +138,7 @@ class ComprasModelo
         $existe = $stmt->fetch(PDO::FETCH_NAMED);
 
         if (intval($existe["existe"]) > 0) {
+            $respuesta["id_compra"] = 0;
             $respuesta["tipo_msj"] = "error";
             $respuesta["msj"] = "El comprobante de compra: " . strtoupper($formulario_compra["serie"]) . '-' . $formulario_compra["correlativo"] . ' ya fue registrado';
             return $respuesta;
@@ -152,6 +153,7 @@ class ComprasModelo
                                                         serie,
                                                         correlativo,
                                                         id_moneda,
+                                                        forma_pago,
                                                         ope_exonerada,
                                                         ope_inafecta,
                                                         ope_gravada,
@@ -165,6 +167,7 @@ class ComprasModelo
                                                         upper(:serie),
                                                         :correlativo,
                                                         :id_moneda,
+                                                        :forma_pago,
                                                         :ope_exoneradas,
                                                         :ope_inafectas,
                                                         :ope_gravadas,
@@ -180,6 +183,7 @@ class ComprasModelo
                 ':serie' => $formulario_compra["serie"],
                 ':correlativo' => $formulario_compra["correlativo"],
                 ':id_moneda' => $formulario_compra["moneda"],
+                ':forma_pago' => $formulario_compra["forma_pago"] == "1" ? "CONTADO":"CRÉDITO",
                 ':ope_exoneradas' => $ope_exoneradas,
                 ':ope_inafectas' => $ope_inafectas,
                 ':ope_gravadas' => $ope_gravadas,
@@ -252,6 +256,7 @@ class ComprasModelo
                 // $dbh->commit();
             }
 
+            $respuesta["id_compra"] = $id_compra_inserted;
             $respuesta["tipo_msj"] = "success";
             $respuesta["msj"] = "Se registró la compra correctamente con Nro: " . $id_compra_inserted;
         } catch (Exception $e) {
@@ -597,6 +602,185 @@ class ComprasModelo
             $dbh->rollBack();
             $respuesta["tipo_msj"] = "error";
             $respuesta["msj"] = "Error al eliminar la compra " . $e->getMessage();
+        }
+
+        return $respuesta;
+    }
+
+    static public function mdlInsertarCuotas($id_compra, $cronograma)
+    {
+
+
+        $dbh = Conexion::conectar();
+
+        try {
+
+            for ($i = 0; $i < count($cronograma); $i++) {
+
+                $stmt = $dbh->prepare("INSERT INTO cuotas_compras(id_compra, cuota, importe, importe_pagado,saldo_pendiente, cuota_pagada,fecha_vencimiento, estado)
+                VALUES (:id_compra, :cuota, :importe, :importe_pagado, :saldo_pendiente, :cuota_pagada, :fecha_vencimiento, '1')");
+
+                $dbh->beginTransaction();
+                $stmt->execute(array(
+                    ':id_compra'            => $id_compra,
+                    ':cuota'            => $cronograma[$i]["cuota"],
+                    ':importe'            => $cronograma[$i]["importe"],
+                    ':importe_pagado'   => 0,
+                    ':saldo_pendiente'   => $cronograma[$i]["importe"],
+                    ':cuota_pagada'      => 0,
+                    ':fecha_vencimiento' => $cronograma[$i]["vencimiento"]
+                ));
+
+                $dbh->commit();
+            }
+
+            return "ok";
+        } catch (Exception $e) {
+            $dbh->rollBack();
+            return $e->getMessage();
+        }
+    }
+
+    static public function mdlObtenerComprasPorPagar($post)
+    {
+
+        $columns = [
+            "id",
+            "comprobante",
+            "proveedor",
+            "fecha_compra",
+            "total_compra",
+            "nro_cuotas",
+            "cuotas_pagadas",
+            "saldo_pendiente"
+        ];
+
+        $query = "SELECT '' as opciones,
+                        c.id,
+                    concat(c.serie,'-',c.correlativo) as comprobante,
+                    p.razon_social as proveedor,
+                    date(c.fecha_compra) as fecha_compra,
+                    round(c.total_compra,2) as total_compra,
+                    (select count(cc.id) from cuotas_compras cc where cc.id_compra = c.id) as nro_cuotas,
+                    (select count(cc.id) from cuotas_compras cc where cc.id_compra = c.id and cc.cuota_pagada = 1) as cuotas_pagadas,
+                    round((select round(sum(ifnull(cc.saldo_pendiente,0)),2) from cuotas_compras cc where cc.id_compra = c.id and cc.cuota_pagada = 0),2) as saldo_pendiente
+                FROM compras c inner join proveedores p on c.id_proveedor = p.id
+                WHERE upper(c.forma_pago) = 'CRÉDITO'
+                AND c.pagado = 0";
+
+        if (isset($post["search"]["value"])) {
+            $query .= '  AND (c.fecha_compra like "%' . $post["search"]["value"] . '%"
+                                or p.razon_social like "%' . $post["search"]["value"] . '%"
+                                or concat(c.serie,"-",c.correlativo) like "%' . $post["search"]["value"] . '%")';
+        }
+
+        // var_dump($query);
+        if (isset($post["order"])) {
+            $query .= ' ORDER BY ' . $columns[$post['order']['0']['column']] . ' ' . $post['order']['0']['dir'] . ' ';
+        } else {
+            $query .= ' ORDER BY c.id desc ';
+        }
+
+        //SE AGREGA PAGINACION
+        if ($post["length"] != -1) {
+            $query1 = " LIMIT " . $post["start"] . ", " . $post["length"];
+        }
+
+        $stmt = Conexion::conectar()->prepare($query);
+
+        $stmt->execute();
+
+        $number_filter_row = $stmt->rowCount();
+
+        $stmt =  Conexion::conectar()->prepare($query . $query1);
+
+        $stmt->execute();
+
+        $results = $stmt->fetchAll(PDO::FETCH_NAMED);
+
+        $data = array();
+
+        foreach ($results as $row) {
+            $sub_array = array();
+            $sub_array[] = $row['opciones'];
+            $sub_array[] = $row['id'];
+            $sub_array[] = $row['comprobante'];
+            $sub_array[] = $row['proveedor'];
+            $sub_array[] = $row['fecha_compra'];
+            $sub_array[] = $row['total_compra'];
+            $sub_array[] = $row['nro_cuotas'];
+            $sub_array[] = $row['cuotas_pagadas'];
+            $sub_array[] = $row['saldo_pendiente'];
+            $data[] = $sub_array;
+        }
+
+        $stmt = Conexion::conectar()->prepare(
+            $query = "SELECT 'X'
+                    FROM compras c
+                    WHERE upper(c.forma_pago) = 'CREDITO'
+                    AND c.pagado = 0"
+        );
+
+        $stmt->execute();
+
+        $count_all_data = $stmt->rowCount();
+
+        $facturas = array(
+            'draw' => $post['draw'],
+            "recordsTotal" => $count_all_data,
+            "recordsFiltered" => $number_filter_row,
+            "data" => $data
+        );
+
+        return $facturas;
+    }
+
+    static public function mdlObtenerCuotasPorIdCompra($id_compra)
+    {
+
+        $stmt = Conexion::conectar()->prepare("SELECT 
+                                                id, 
+                                                cuota, 
+                                                round(ifnull(importe,0),2) as  importe,
+                                                round(ifnull(importe_pagado,0),2) as  importe_pagado,
+                                                round(ifnull(saldo_pendiente,0),2) as saldo_pendiente,
+                                                case when cuota_pagada = 0 then 'NO' else 'SI' end as cuota_pagada, 
+                                                fecha_vencimiento
+                                        from cuotas_compras c
+                                        where c.id_compra = :id_compra");
+
+        $stmt->bindParam(":id_compra", $id_compra, PDO::PARAM_STR);
+        $stmt->execute();
+
+        return $stmt->fetchAll();
+    }
+
+    static public function mdlPagarCuotas($id_compra, $importe_a_pagar)
+    {
+
+        $id_usuario = $_SESSION["usuario"]->id_usuario;
+
+        $dbh = Conexion::conectar();
+
+        try {
+
+            $stmt = $dbh->prepare("call prc_pagar_cuotas_compra(:id_compra, :importe_a_pagar, :id_usuario)");
+
+            $dbh->beginTransaction();
+            $stmt->execute(array(
+                ':id_compra'            => $id_compra,
+                ':importe_a_pagar'     => $importe_a_pagar,
+                ':id_usuario'          => $id_usuario
+            ));
+
+            $dbh->commit();
+
+            $respuesta["tipo_msj"] = "success";
+            $respuesta["msj"] = "Se registró el pago correctamente";
+        } catch (Exception $e) {
+            $dbh->rollBack();
+            $respuesta["tipo_msj"] = "error";
+            $respuesta["msj"] = "Error al registrar el pago " . $e->getMessage();
         }
 
         return $respuesta;

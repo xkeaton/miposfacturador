@@ -27,7 +27,7 @@ class ReportesModelo
         if (isset($post["order"])) {
             $query .= ' ORDER BY ' . $column[$post['order']['0']['column']] . ' ' . $post['order']['0']['dir'] . ' ';
         } else {
-            $query .= ' ORDER BY id asc ';
+            $query .= ' ORDER BY k.id asc ';
         }
 
         //SE AGREGA PAGINACION
@@ -86,7 +86,7 @@ class ReportesModelo
     static public function mdlReporteKardexPorProducto($post)
     {
 
-        $column = ["codigo_producto", "producto", "fecha", "tipo_movimiento", "cantidad", "stock"];
+        $column = ["codigo_producto", "producto", "fecha", "tipo_movimiento", "cantidad", "stock", "almacen"];
 
         $query = "SELECT 
                         k.codigo_producto, 
@@ -105,12 +105,15 @@ class ReportesModelo
                             from kardex k1 
                         where k1.id = k.id ) 
                         as cantidad,
-                    ex_unidades as stock
-                from kardex k inner join productos p on k.codigo_producto = p.codigo_producto";
+                    ex_unidades as stock,
+                    ifnull(a.nombre, '-') as almacen
+                from kardex k 
+                inner join productos p on k.codigo_producto = p.codigo_producto
+                left join almacenes a on k.id_almacen = a.id";
 
         if (isset($post["search"]["value"])) {
-            $query .= ' WHERE   
-                                k.codigo_producto like "%' . $post["search"]["value"] . '%" 
+            $query .= ' WHERE    p.descripcion like "%' . $post["search"]["value"] . '%" 
+                                or k.codigo_producto like "%' . $post["search"]["value"] . '%" 
                         GROUP BY 
                                 k.codigo_producto, 
                                 p.descripcion,
@@ -118,7 +121,8 @@ class ReportesModelo
                                 k.concepto, 
                                 in_unidades,        
                                 out_unidades,        
-                                ex_unidades';
+                                ex_unidades,
+                                a.nombre';
         }
 
         if (isset($post["order"])) {
@@ -154,6 +158,7 @@ class ReportesModelo
             $sub_array[] = $row['tipo_movimiento'];
             $sub_array[] = $row['cantidad'];
             $sub_array[] = $row['stock'];
+            $sub_array[] = $row['almacen'];
             $data[] = $sub_array;
         }
 
@@ -161,6 +166,7 @@ class ReportesModelo
                                                     *
                                                 from 
                                                     kardex k inner join productos p on k.codigo_producto = p.codigo_producto
+                                                left join almacenes a on k.id_almacen = a.id
                                                 GROUP BY 
                                                     k.codigo_producto, 
                                                     p.descripcion,
@@ -168,7 +174,8 @@ class ReportesModelo
                                                     k.concepto, 
                                                     in_unidades,        
                                                     out_unidades,        
-                                                    ex_unidades");
+                                                    ex_unidades,
+                                                    a.nombre");
 
         $stmt->execute();
 
@@ -281,7 +288,7 @@ class ReportesModelo
 
         if (isset($post["search"]["value"])) {
             $query .= ' WHERE p.codigo_producto like "%' . $post["search"]["value"] . '%" 
-                    or p.descripcion like "%' . $post["search"]["value"] .'%" GROUP BY p.codigo_producto ';
+                    or p.descripcion like "%' . $post["search"]["value"] . '%" GROUP BY p.codigo_producto ';
         }
 
         if (isset($post["order"])) {
@@ -344,5 +351,49 @@ class ReportesModelo
         );
 
         return $output;
+    }
+
+    static public function mdlReporteRegistroVentas($comprobantes, $cliente, $fecha_desde, $fecha_hasta)
+    {
+        $stmt = Conexion::conectar()->prepare("SELECT v.id, 
+                                                        v.fecha_emision,
+                                                        '' as fecha_vencimiento,
+                                                        tc.codigo as tipo_comprobante,
+                                                        v.serie,
+                                                        v.correlativo,
+                                                        cli.id_tipo_documento,
+                                                        cli.nro_documento,
+                                                        cli.nombres_apellidos_razon_social,
+                                                        0 as valor_facturado_exportacion,
+                                                        v.total_operaciones_gravadas as base_imponible_ope_gravada,
+                                                        v.total_operaciones_exoneradas as importe_total_ope_exo,
+                                                        v.total_operaciones_inafectas as importe_total_ope_ina,
+                                                        0 as isc,
+                                                        v.total_igv as igv,
+                                                        0 as otros_trib_cargos_no_parte_base_imp,
+                                                        v.importe_total as imp_total_comprobante_pago,
+                                                        1 as tipo_cambio,
+                                                        '' as fecha_comprobante_modificado,
+                                                        ifnull(ser_mod.id_tipo_comprobante,'') as tipo_comprobante_modificado,
+                                                        ifnull(ser_mod.serie,'') as serie_modificado,
+                                                        ifnull(v.correlativo_modificado,'') as correlativo_modificado
+                                                FROM venta v inner join serie ser on v.id_serie = ser.id
+                                                             inner join tipo_comprobante tc on tc.codigo = ser.id_tipo_comprobante
+                                                             inner join clientes cli on cli.id = v.id_cliente
+                                                             left join serie ser_mod on v.id_serie_modificado = ser_mod.id
+                                                WHERE (tc.codigo = :comprobantes OR :comprobantes = '')
+                                                AND (cli.nombres_apellidos_razon_social like concat('%',:cliente,'%') OR :cliente = '')
+                                                AND (v.fecha_emision >= :fecha_desde OR :fecha_desde = '')
+                                                AND (v.fecha_emision <= :fecha_hasta OR :fecha_hasta = '')
+                                                ORDER BY v.id desc
+                                                LIMIT 10000");
+
+        $stmt->bindParam(":comprobantes", $comprobantes, PDO::PARAM_STR);
+        $stmt->bindParam(":cliente", $cliente, PDO::PARAM_STR);
+        $stmt->bindParam(":fecha_desde", $fecha_desde, PDO::PARAM_STR);
+        $stmt->bindParam(":fecha_hasta", $fecha_hasta, PDO::PARAM_STR);
+        $stmt->execute();
+
+        return $stmt->fetchAll();
     }
 }

@@ -14,31 +14,81 @@ class ProductosModelo
     static public function mdlCargaMasivaProductos($fileProductos)
     {
 
-        $nombreArchivo = $fileProductos['tmp_name'];
+        try {
 
-        $documento = IOFactory::load($nombreArchivo);
+            $nombreArchivo = $fileProductos['tmp_name'][0];
 
-        //CATEGORIAS
-        $hojaCategorias = $documento->getSheetByName("Categorias");
-        $numeroFilasCategorias = $hojaCategorias->getHighestDataRow();
+            $documento = IOFactory::load($nombreArchivo);
 
-        //TIPO AFECTACION
-        $hojaTipoAfectacion = $documento->getSheetByName("Tipo_Afectacion");
-        $numeroFilasTipoAfectacion = $hojaTipoAfectacion->getHighestDataRow();
+            //CATEGORIAS
+            $hojaCategorias = $documento->getSheetByName("Categorias");
+            if(!$hojaCategorias){
+                $respuesta["tipo_msj"] = "error";
+                $respuesta["msj"] = "No existe la hoja Categorias en el excel seleccionado";
+                return $respuesta;
+            }
+            $numeroFilasCategorias = $hojaCategorias->getHighestDataRow();
 
-        //UNIDAD MEDIDA
-        $hojaUnidadMedida = $documento->getSheetByName("Unidad_Medida");
-        $numeroFilasUnidadMedida = $hojaUnidadMedida->getHighestDataRow();
+            //TIPO AFECTACION
+            $hojaTipoAfectacion = $documento->getSheetByName("Tipo_Afectacion");
+            if(!$hojaTipoAfectacion){
+                $respuesta["tipo_msj"] = "error";
+                $respuesta["msj"] = "No existe la hoja Tipo_Afectacion en el excel seleccionado";
+                return $respuesta;
+            }
+            $numeroFilasTipoAfectacion = $hojaTipoAfectacion->getHighestDataRow();
 
-        //PRODUCTOS
-        $hojaProductos = $documento->getSheetByName("Productos");
-        $numeroFilasProductos = $hojaProductos->getHighestDataRow();
+            //UNIDAD MEDIDA
+            $hojaUnidadMedida = $documento->getSheetByName("Unidad_Medida");
+            if(!$hojaUnidadMedida){
+                $respuesta["tipo_msj"] = "error";
+                $respuesta["msj"] = "No existe la hoja Unidad_Medida en el excel seleccionado";
+                return $respuesta;
+            }
+            $numeroFilasUnidadMedida = $hojaUnidadMedida->getHighestDataRow();
 
-        $categoriasRegistradas = 0;
+            //PRODUCTOS
+            $hojaProductos = $documento->getSheetByName("Productos");
+            if(!$hojaProductos){
+                $respuesta["tipo_msj"] = "error";
+                $respuesta["msj"] = "No existe la hoja Productos en el excel seleccionado";
+                return $respuesta;
+            }
+
+            $numeroFilasProductos = $hojaProductos->getHighestDataRow();
+
+        } catch (Exception $e) {
+            $respuesta["tipo_msj"] = "error";
+            $respuesta["msj"] = "Error al leer las hojas del excel " . $e->getMessage();
+            return $respuesta;
+        }
+
+
+        $categoriasRegistrados = 0;
         $productosRegistrados = 0;
+        $unidadesMedidaRegistrados = 0;
 
 
         $dbh = Conexion::conectar();
+
+        try {
+            $stmt = $dbh->prepare("INSERT INTO historico_cargas_masivas(categorias_excel, productos_excel, unidades_medida_excel)
+                                                values(:categorias_excel, :productos_excel, :unidades_medida_excel)");
+
+            $dbh->beginTransaction();
+            $stmt->execute(array(
+                ':categorias_excel' => $numeroFilasCategorias - 1,
+                ':productos_excel' => $numeroFilasProductos - 1,
+                ':unidades_medida_excel' => $numeroFilasUnidadMedida - 1
+            ));
+            $id_carga_masiva = $dbh->lastInsertId();
+            $dbh->commit();
+        } catch (Exception $e) {
+            $dbh->rollBack();
+            $respuesta["tipo_msj"] = "error";
+            $respuesta["msj"] = "Error al registrar historico de cargas masivas " . $e->getMessage();
+            return $respuesta;
+        }
 
         /*=====================================================================================
         ELIMINAR TABLAS DEL SISTEMA (venta - detalle_venta - kardex - categorias - 
@@ -66,14 +116,15 @@ class ProductosModelo
 
                 try {
                     $stmt = $dbh->prepare("INSERT INTO categorias(descripcion)
-                                                        values(?);");
+                                                        values(:categoria);");
 
                     $dbh->beginTransaction();
                     $stmt->execute(array(
-                        $categoria,
+                        ':categoria' => $categoria,
                     ));
 
                     $dbh->commit();
+                    $categoriasRegistrados += 1;
                 } catch (Exception $e) {
                     $dbh->rollBack();
                     $respuesta["tipo_msj"] = "error";
@@ -81,6 +132,24 @@ class ProductosModelo
                     return $respuesta;
                 }
             }
+        }
+
+        try {
+            $stmt = $dbh->prepare("UPDATE historico_cargas_masivas
+                                    SET categorias_insertadas = :categorias_insertadas
+                                    WHERE id = :id");
+
+            $dbh->beginTransaction();
+            $stmt->execute(array(
+                ':categorias_insertadas' => $categoriasRegistrados,
+                ':id' => $id_carga_masiva
+            ));
+            $dbh->commit();
+        } catch (Exception $e) {
+            $dbh->rollBack();
+            $respuesta["tipo_msj"] = "error";
+            $respuesta["msj"] = "Error al el historico de cargas -> Categorías " . $e->getMessage();
+            return $respuesta;
         }
 
         /*=====================================================================================
@@ -94,6 +163,7 @@ class ProductosModelo
             $codigo_tributo = $hojaTipoAfectacion->getCellByColumnAndRow(4, $i);
             $nombre_tributo = $hojaTipoAfectacion->getCellByColumnAndRow(5, $i);
             $tipo_tributo = $hojaTipoAfectacion->getCellByColumnAndRow(6, $i);
+            $porcentaje_impuesto = $hojaTipoAfectacion->getCellByColumnAndRow(7, $i);
 
             if (!empty($codigo)) {
 
@@ -103,8 +173,9 @@ class ProductosModelo
                                                                             letra_tributo, 
                                                                             codigo_tributo, 
                                                                             nombre_tributo, 
-                                                                            tipo_tributo)
-                                                        values(?,upper(?),upper(?),upper(?),upper(?),upper(?));");
+                                                                            tipo_tributo,
+                                                                            porcentaje_impuesto)
+                                                        values(?,upper(?),upper(?),upper(?),upper(?),upper(?),?);");
 
                     $dbh->beginTransaction();
                     $stmt->execute(array(
@@ -113,7 +184,8 @@ class ProductosModelo
                         $letra_tributo,
                         $codigo_tributo,
                         $nombre_tributo,
-                        $tipo_tributo
+                        $tipo_tributo,
+                        $porcentaje_impuesto
                     ));
 
                     $dbh->commit();
@@ -147,6 +219,7 @@ class ProductosModelo
                     ));
 
                     $dbh->commit();
+                    $unidadesMedidaRegistrados += 1;
                 } catch (Exception $e) {
                     $dbh->rollBack();
                     $respuesta["tipo_msj"] = "error";
@@ -155,6 +228,25 @@ class ProductosModelo
                 }
             }
         }
+
+        try {
+            $stmt = $dbh->prepare("UPDATE historico_cargas_masivas
+                                    SET unidades_medida_insertadas = :unidades_medida_insertadas
+                                    WHERE id = :id");
+
+            $dbh->beginTransaction();
+            $stmt->execute(array(
+                ':unidades_medida_insertadas' => $unidadesMedidaRegistrados,
+                ':id' => $id_carga_masiva
+            ));
+            $dbh->commit();
+        } catch (Exception $e) {
+            $dbh->rollBack();
+            $respuesta["tipo_msj"] = "error";
+            $respuesta["msj"] = "Error al el historico de cargas -> Unidades de Medida " . $e->getMessage();
+            return $respuesta;
+        }
+
 
         /*=====================================================================================
         CICLO FOR PARA REGISTROS DE PRODUCTOS
@@ -177,6 +269,11 @@ class ProductosModelo
             $minimo_stock = $hojaProductos->getCell("N" . $i);
             $ventas = $hojaProductos->getCell("O" . $i);
             $costo_total = $hojaProductos->getCell("P" . $i)->getCalculatedValue();
+            $imagen = $hojaProductos->getCell("Q" . $i);
+
+            if(strlen($imagen) == 0){
+                $imagen = 'no_image.jpg';
+            }
 
             if (!empty($codigo_producto) && strlen($codigo_producto) > 0) {
 
@@ -197,9 +294,10 @@ class ProductosModelo
                                                                 stock, 
                                                                 minimo_stock, 
                                                                 ventas, 
-                                                                costo_total
+                                                                costo_total,
+                                                                imagen
                                                                 )
-                                                                values(?,?,?,?,?,ROUND(?,2),ROUND(?,2),ROUND(?,2),ROUND(?,2),ROUND(?,2),ROUND(?,2),ROUND(?,2),?,?,?,ROUND(?,2))");
+                                                                values(?,?,?,?,?,ROUND(?,2),ROUND(?,2),ROUND(?,2),ROUND(?,2),ROUND(?,2),ROUND(?,2),ROUND(?,2),?,?,?,ROUND(?,2),?)");
 
                     $dbh->beginTransaction();
                     $stmt->execute(array(
@@ -218,16 +316,30 @@ class ProductosModelo
                         $stock,
                         $minimo_stock,
                         $ventas,
-                        $costo_total
+                        $costo_total,
+                        $imagen
                     ));
 
                     $dbh->commit();
+
+                    $productosRegistrados += 1;
+
+                    // Asociar el producto en todos los almacenes para mantener coherencia
+                    $stmtAlmacenes = $dbh->prepare("SELECT id FROM almacenes");
+                    $stmtAlmacenes->execute();
+                    $almacenesList = $stmtAlmacenes->fetchAll(PDO::FETCH_COLUMN);
+
+                    foreach ($almacenesList as $almacenId) {
+                        $stockVal = ($almacenId == 1) ? $stock : 0;
+                        $stmtStock = $dbh->prepare("INSERT INTO productos_almacenes (id_almacen, codigo_producto, stock) VALUES (?, ?, ?)");
+                        $stmtStock->execute([$almacenId, $codigo_producto, $stockVal]);
+                    }
 
                     $concepto = 'INVENTARIO INICIAL';
                     $comprobante = '';
 
                     //REGISTRAMOS KARDEX - INVENTARIO INICIAL
-                    $stmt = $dbh->prepare("call prc_registrar_kardex_existencias(?,?,?,?,?,?)");
+                    $stmt = $dbh->prepare("call prc_registrar_kardex_existencias(?,?,?,?,?,?,?)");
 
                     $dbh->beginTransaction();
                     $stmt->execute(array(
@@ -236,7 +348,8 @@ class ProductosModelo
                         $comprobante,
                         $stock,
                         $costo_unitario,
-                        $costo_total
+                        $costo_total,
+                        1
                     ));
 
                     $dbh->commit();
@@ -244,10 +357,45 @@ class ProductosModelo
                 } catch (Exception $e) {
                     $dbh->rollBack();
                     $respuesta["tipo_msj"] = "error";
-                    $respuesta["msj"] = "Error al cargar el kardex al sistema";
+                    $respuesta["msj"] = "Error al cargar los productos al sistema" . $e->getMessage();
                     return $respuesta;
                 }
             }
+        }
+
+        try {
+            $stmt = $dbh->prepare("UPDATE historico_cargas_masivas
+                                    SET productos_insertados = :productos_insertados
+                                    WHERE id = :id");
+
+            $dbh->beginTransaction();
+            $stmt->execute(array(
+                ':productos_insertados' => $productosRegistrados,
+                ':id' => $id_carga_masiva
+            ));
+            $dbh->commit();
+
+            $stmt = $dbh->prepare("UPDATE historico_cargas_masivas
+                                    SET estado_carga = case 
+                                                            when (categorias_insertadas = categorias_excel 
+                                                                    and productos_insertados = productos_excel 
+                                                                    and unidades_medida_insertadas = unidades_medida_excel)
+                                                                then 1
+                                                            else 0
+                                                        end
+                                    WHERE id = :id");
+
+            $dbh->beginTransaction();
+            $stmt->execute(array(
+                ':id' => $id_carga_masiva
+            ));
+            $dbh->commit();
+
+        } catch (Exception $e) {
+            $dbh->rollBack();
+            $respuesta["tipo_msj"] = "error";
+            $respuesta["msj"] = "Error al el historico de cargas -> Unidades de Medida " . $e->getMessage();
+            return $respuesta;
         }
 
         $respuesta["tipo_msj"] = "success";
@@ -268,6 +416,7 @@ class ProductosModelo
 
         return $stmt->fetch();
     }
+
     /*===================================================================
     BUSCAR EL ID DE UNA CATEGORIA POR EL NOMBRE DE LA CATEGORIA
     ====================================================================*/
@@ -294,13 +443,138 @@ class ProductosModelo
         return $stmt->fetch();
     }
 
-    /*===================================================================
-    OBTENER LISTADO TOTAL DE PRODUCTOS PARA EL DATATABLE
-    ====================================================================*/
-    static public function mdlListarProductos()
+    static public function mdlListarProductos($id_almacen = 1)
     {
 
-        $stmt = Conexion::conectar()->prepare('call prc_ListarProductos');
+        $stmt = Conexion::conectar()->prepare('call prc_ListarProductosPorAlmacen(:id_almacen)');
+        $stmt->bindParam(":id_almacen", $id_almacen, PDO::PARAM_INT);
+
+        $stmt->execute();
+
+        return $stmt->fetchAll();
+    }
+
+    static public function mdlObtenerProductoPorId($id_producto, $id_almacen = 1)
+    {
+
+        $stmt = Conexion::conectar()->prepare('SELECT  
+                                                p.id, 
+                                                p.codigo_producto, 
+                                                p.id_categoria, 
+                                                p.descripcion, 
+                                                p.id_tipo_afectacion_igv, 
+                                                p.id_unidad_medida, 
+                                                p.costo_unitario, 
+                                                p.precio_unitario_con_igv, 
+                                                p.precio_unitario_sin_igv, 
+                                                p.precio_unitario_mayor_con_igv, 
+                                                p.precio_unitario_mayor_sin_igv, 
+                                                p.precio_unitario_oferta_con_igv, 
+                                                p.precio_unitario_oferta_sin_igv, 
+                                                IFNULL(pa.stock, 0) as stock, 
+                                                p.minimo_stock, 
+                                                p.ventas, 
+                                                p.costo_total, 
+                                                p.imagen, 
+                                                p.fecha_creacion, 
+                                                p.fecha_actualizacion, 
+                                                p.estado
+                                            FROM productos p 
+                                            LEFT JOIN productos_almacenes pa ON p.codigo_producto = pa.codigo_producto AND pa.id_almacen = :id_almacen
+                                            WHERE p.id = :id_producto');
+
+        $stmt->bindParam(":id_producto", $id_producto, PDO::PARAM_STR);
+        $stmt->bindParam(":id_almacen", $id_almacen, PDO::PARAM_INT);
+
+        $stmt->execute();
+
+        return $stmt->fetch(PDO::FETCH_OBJ);
+    }
+
+    static public function mdlListarProductosPorCategoria($id_categoria, $id_almacen = 1)
+    {
+
+        $stmt = Conexion::conectar()->prepare('SELECT  
+                                                p.codigo_producto,
+                                                p.id_categoria,
+                                                upper(c.descripcion) as nombre_categoria,
+                                                upper(p.descripcion) as producto,
+                                                imagen,
+                                                p.id_tipo_afectacion_igv,
+                                                upper(tai.descripcion) as tipo_afectacion_igv,
+                                                p.id_unidad_medida,
+                                                upper(cum.descripcion) as unidad_medida,
+                                                ROUND(costo_unitario,2) as costo_unitario,
+                                                ROUND(precio_unitario_con_igv,2) as precio_unitario_con_igv,
+                                                ROUND(precio_unitario_sin_igv,2) as precio_unitario_sin_igv,
+                                                ROUND(precio_unitario_mayor_con_igv,2) as precio_unitario_mayor_con_igv,
+                                                ROUND(precio_unitario_mayor_sin_igv,2) as precio_unitario_mayor_sin_igv,
+                                                ROUND(precio_unitario_oferta_con_igv,2) as precio_unitario_oferta_con_igv,
+                                                ROUND(precio_unitario_oferta_sin_igv,2) as precio_unitario_oferta_sin_igv,
+                                                COALESCE(pa.stock, 0) as stock,
+                                                minimo_stock,
+                                                ventas,
+                                                ROUND(costo_total,2) as costo_total,
+                                                p.fecha_creacion,
+                                                p.fecha_actualizacion,
+                                                p.estado
+                                            FROM productos p INNER JOIN categorias c on p.id_categoria = c.id
+                                                            inner join tipo_afectacion_igv tai on tai.codigo = p.id_tipo_afectacion_igv
+                                                            inner join codigo_unidad_medida cum on cum.id = p.id_unidad_medida
+                                                            left join productos_almacenes pa on pa.codigo_producto = p.codigo_producto and pa.id_almacen = :id_almacen
+                                            WHERE p.estado in (0,1)
+                                            AND COALESCE(pa.stock, 0) > 0
+                                            AND (p.id_categoria = :id_categoria or :id_categoria = 0)
+                                            order by p.codigo_producto desc');
+
+        $stmt->bindParam(":id_categoria", $id_categoria, PDO::PARAM_STR);
+        $stmt->bindParam(":id_almacen", $id_almacen, PDO::PARAM_INT);
+
+        $stmt->execute();
+
+        return $stmt->fetchAll();
+    }
+
+    static public function mdlListarProductosPorDescripcion($producto, $id_almacen = 1)
+    {
+
+        $stmt = Conexion::conectar()->prepare('SELECT  
+                                                p.codigo_producto,
+                                                p.id_categoria,
+                                                upper(c.descripcion) as nombre_categoria,
+                                                upper(p.descripcion) as producto,
+                                                imagen,
+                                                p.id_tipo_afectacion_igv,
+                                                upper(tai.descripcion) as tipo_afectacion_igv,
+                                                p.id_unidad_medida,
+                                                upper(cum.descripcion) as unidad_medida,
+                                                ROUND(costo_unitario,2) as costo_unitario,
+                                                ROUND(precio_unitario_con_igv,2) as precio_unitario_con_igv,
+                                                ROUND(precio_unitario_sin_igv,2) as precio_unitario_sin_igv,
+                                                ROUND(precio_unitario_mayor_con_igv,2) as precio_unitario_mayor_con_igv,
+                                                ROUND(precio_unitario_mayor_sin_igv,2) as precio_unitario_mayor_sin_igv,
+                                                ROUND(precio_unitario_oferta_con_igv,2) as precio_unitario_oferta_con_igv,
+                                                ROUND(precio_unitario_oferta_sin_igv,2) as precio_unitario_oferta_sin_igv,
+                                                COALESCE(pa.stock, 0) as stock,
+                                                minimo_stock,
+                                                ventas,
+                                                ROUND(costo_total,2) as costo_total,
+                                                p.fecha_creacion,
+                                                p.fecha_actualizacion,
+                                                p.estado
+                                            FROM productos p INNER JOIN categorias c on p.id_categoria = c.id
+                                                            inner join tipo_afectacion_igv tai on tai.codigo = p.id_tipo_afectacion_igv
+                                                            inner join codigo_unidad_medida cum on cum.id = p.id_unidad_medida
+                                                            left join productos_almacenes pa on pa.codigo_producto = p.codigo_producto and pa.id_almacen = :id_almacen
+                                            WHERE p.estado in (0,1)
+                                            AND COALESCE(pa.stock, 0) > 0
+                                            AND (p.descripcion like concat("%",:producto,"%") or c.descripcion like concat("%",:producto,"%") 
+                                                    or p.codigo_producto like concat("%",:producto,"%")
+                                                    or :producto = "")
+                                            order by p.codigo_producto desc');
+
+        $stmt->bindParam(":producto", $producto, PDO::PARAM_STR);
+        $stmt->bindParam(":id_almacen", $id_almacen, PDO::PARAM_INT);
 
         $stmt->execute();
 
@@ -318,13 +592,19 @@ class ProductosModelo
             $dbh = Conexion::conectar();
 
             $fecha = date('Y-m-d');
-            $costo_total_producto = 0;
+            $id_almacen = isset($array_datos_producto["id_almacen"]) ? $array_datos_producto["id_almacen"] : 1;
+            $stock_inicial = isset($array_datos_producto["stock_inicial"]) ? (float)$array_datos_producto["stock_inicial"] : 0;
+            $costo_unitario = isset($array_datos_producto["costo_unitario"]) ? (float)$array_datos_producto["costo_unitario"] : 0;
+            $costo_total_producto = $stock_inicial * $costo_unitario;
 
-            $stmt = $dbh->prepare("INSERT INTO PRODUCTOS(codigo_producto, 
+            $stmt = $dbh->prepare("INSERT INTO productos(codigo_producto, 
                                                         id_categoria,
                                                         descripcion, 
                                                         id_tipo_afectacion_igv, 
                                                         id_unidad_medida,
+                                                        costo_unitario,
+                                                        stock,
+                                                        costo_total,
                                                         precio_unitario_con_igv,
                                                         precio_unitario_sin_igv, 
                                                         precio_unitario_mayor_con_igv,
@@ -335,7 +615,7 @@ class ProductosModelo
                                                         minimo_stock,
                                                         fecha_creacion,
                                                         fecha_actualizacion) 
-                                                VALUES (?,?,upper(?),?,?,?,?,?,?,?,?,?,?,?,?)");
+                                                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 
             $dbh->beginTransaction();
             $stmt->execute(array(
@@ -344,13 +624,16 @@ class ProductosModelo
                 $array_datos_producto["descripcion"],
                 $array_datos_producto["id_tipo_afectacion_igv"],
                 $array_datos_producto["id_unidad_medida"],
+                $costo_unitario,
+                $stock_inicial,
+                $costo_total_producto,
                 $array_datos_producto["precio_unitario_con_igv"],
                 $array_datos_producto["precio_unitario_sin_igv"],
                 $array_datos_producto["precio_unitario_mayor_con_igv"],
                 $array_datos_producto["precio_unitario_mayor_sin_igv"],
                 $array_datos_producto["precio_unitario_oferta_con_igv"],
                 $array_datos_producto["precio_unitario_oferta_sin_igv"],
-                $imagen["nuevoNombre"] ?? null,
+                $imagen["nuevoNombre"] ?? 'no_image.jpg',
                 $array_datos_producto["minimo_stock"],
                 $fecha,
                 $fecha
@@ -363,20 +646,32 @@ class ProductosModelo
                 $guardarImagen->guardarImagen($imagen["folder"], $imagen["ubicacionTemporal"], $imagen["nuevoNombre"]);
             }
 
-            $concepto = 'REGISTRADO EN SISTEMA';
+            // Asociar el producto en todos los almacenes
+            $stmtAlmacenes = $dbh->prepare("SELECT id FROM almacenes");
+            $stmtAlmacenes->execute();
+            $almacenes = $stmtAlmacenes->fetchAll(PDO::FETCH_COLUMN);
+
+            foreach ($almacenes as $almacenId) {
+                $stockVal = ($almacenId == $id_almacen) ? $stock_inicial : 0;
+                $stmtStock = $dbh->prepare("INSERT INTO productos_almacenes (id_almacen, codigo_producto, stock) VALUES (?, ?, ?)");
+                $stmtStock->execute([$almacenId, $array_datos_producto["codigo_producto"], $stockVal]);
+            }
+
+            $concepto = 'INVENTARIO INICIAL';
             $comprobante = '';
 
             //REGISTRAMOS KARDEX - INVENTARIO INICIAL
-            $stmt = $dbh->prepare("call prc_registrar_kardex_existencias(?,?,?,?,?,?);");
+            $stmt = $dbh->prepare("call prc_registrar_kardex_existencias(?,?,?,?,?,?,?);");
 
             $dbh->beginTransaction();
             $stmt->execute(array(
                 $array_datos_producto["codigo_producto"],
                 $concepto,
                 $comprobante,
-                0,
-                0,
-                $costo_total_producto
+                $stock_inicial,
+                $costo_unitario,
+                $costo_total_producto,
+                $id_almacen
             ));
 
             $dbh->commit();
@@ -503,10 +798,7 @@ class ProductosModelo
         return $respuesta;
     }
 
-    /*=============================================
-    AUMENTAR STOCK
-    =============================================*/
-    static public function mdlAumentarStock($codigo_producto, $nuevo_stock)
+    static public function mdlAumentarStock($codigo_producto, $nuevo_stock, $id_almacen = 1)
     {
 
         $concepto = 'AUMENTO DE STOCK POR MODULO DE INVENTARIO';
@@ -514,20 +806,32 @@ class ProductosModelo
         try {
 
             $dbh = Conexion::conectar();
-
-            $stmt = $dbh->prepare("call prc_registrar_kardex_bono(?,?,?);");
-
             $dbh->beginTransaction();
-            $stmt->execute(array(
+
+            // 1. Actualizar el stock en el almacén específico
+            $stmtUpdateAlmacen = $dbh->prepare("INSERT INTO productos_almacenes (id_almacen, codigo_producto, stock) 
+                                                VALUES (?, ?, ?) 
+                                                ON DUPLICATE KEY UPDATE stock = ?");
+            $stmtUpdateAlmacen->execute([$id_almacen, $codigo_producto, $nuevo_stock, $nuevo_stock]);
+
+            // 2. Actualizar el stock total en la tabla de productos
+            $stmtSumStock = $dbh->prepare("SELECT SUM(stock) FROM productos_almacenes WHERE codigo_producto = ?");
+            $stmtSumStock->execute([$codigo_producto]);
+            $stockTotal = (float)$stmtSumStock->fetchColumn();
+
+            // Llamamos a prc_registrar_kardex_bono para que haga el cálculo y registre el Kardex
+            $stmtKardex = $dbh->prepare("call prc_registrar_kardex_bono(?,?,?,?);");
+            $stmtKardex->execute(array(
                 $codigo_producto,
                 $concepto,
-                $nuevo_stock
+                $nuevo_stock,
+                $id_almacen
             ));
 
             $dbh->commit();
 
             $respuesta["tipo_msj"] = "success";
-            $respuesta["msj"] = "Se aumento el stock del producto correctamente";
+            $respuesta["msj"] = "Se aumentó el stock del producto correctamente";
         } catch (Exception $e) {
             $dbh->rollBack();
             $respuesta["tipo_msj"] = "error";
@@ -537,10 +841,7 @@ class ProductosModelo
         return $respuesta;
     }
 
-    /*=============================================
-    DISMINUIR STOCK
-    =============================================*/
-    static public function mdlDisminuirStock($codigo_producto, $nuevo_stock)
+    static public function mdlDisminuirStock($codigo_producto, $nuevo_stock, $id_almacen = 1)
     {
 
         $concepto = 'DISMINUCIÓN DE STOCK POR MODULO DE INVENTARIO';
@@ -548,14 +849,26 @@ class ProductosModelo
         try {
 
             $dbh = Conexion::conectar();
-
-            $stmt = $dbh->prepare("call prc_registrar_kardex_vencido(?,?,?)");
-
             $dbh->beginTransaction();
-            $stmt->execute(array(
+
+            // 1. Actualizar el stock en el almacén específico
+            $stmtUpdateAlmacen = $dbh->prepare("INSERT INTO productos_almacenes (id_almacen, codigo_producto, stock) 
+                                                VALUES (?, ?, ?) 
+                                                ON DUPLICATE KEY UPDATE stock = ?");
+            $stmtUpdateAlmacen->execute([$id_almacen, $codigo_producto, $nuevo_stock, $nuevo_stock]);
+
+            // 2. Actualizar el stock total en la tabla de productos
+            $stmtSumStock = $dbh->prepare("SELECT SUM(stock) FROM productos_almacenes WHERE codigo_producto = ?");
+            $stmtSumStock->execute([$codigo_producto]);
+            $stockTotal = (float)$stmtSumStock->fetchColumn();
+
+            // Llamamos a prc_registrar_kardex_vencido
+            $stmtKardex = $dbh->prepare("call prc_registrar_kardex_vencido(?,?,?,?)");
+            $stmtKardex->execute(array(
                 $codigo_producto,
                 $concepto,
-                $nuevo_stock
+                $nuevo_stock,
+                $id_almacen
             ));
 
             $dbh->commit();
@@ -565,7 +878,7 @@ class ProductosModelo
         } catch (Exception $e) {
             $dbh->rollBack();
             $respuesta["tipo_msj"] = "error";
-            $respuesta["msj"] = "Error al dismiunir el stock del producto " . $e->getMessage();
+            $respuesta["msj"] = "Error al disminuir el stock del producto " . $e->getMessage();
         }
 
         return $respuesta;
@@ -594,7 +907,7 @@ class ProductosModelo
     /*===================================================================
     BUSCAR PRODUCTO POR SU CODIGO DE BARRAS
     ====================================================================*/
-    static public function mdlGetDatosProducto($codigoProducto)
+    static public function mdlGetDatosProducto($codigoProducto, $id_almacen = 1)
     {
 
         $stmt = Conexion::conectar()->prepare("SELECT p.codigo_producto, 
@@ -617,16 +930,19 @@ class ProductosModelo
                                                     p.precio_unitario_mayor_sin_igv, 
                                                     p.precio_unitario_oferta_con_igv, 
                                                     p.precio_unitario_oferta_sin_igv, 
-                                                    p.stock,         
+                                                    COALESCE(pa.stock, 0) as stock,         
                                                     p.costo_total,
-                                                    case when p.id_tipo_afectacion_igv = 10 then 1.18 else 1 end as factor_igv,
-                                                    case when p.id_tipo_afectacion_igv = 10 then 0.18 else 0 end as porcentaje_igv
+                                                    case when p.id_tipo_afectacion_igv = 10 then round((tai.porcentaje_impuesto/100)+1,2) else 1 end as factor_igv,
+                                                    case when p.id_tipo_afectacion_igv = 10 then round((porcentaje_impuesto/100),2) else 0 end as porcentaje_igv,
+                                                    p.imagen
                                                 FROM productos p inner join tipo_afectacion_igv tai on tai.codigo = p.id_tipo_afectacion_igv
                                                                 inner join codigo_unidad_medida cum on cum.id = p.id_unidad_medida
-                                                WHERE codigo_producto = :codigoProducto
-                                                AND p.stock > 0");
+                                                                left join productos_almacenes pa on pa.codigo_producto = p.codigo_producto and pa.id_almacen = :id_almacen
+                                                WHERE p.codigo_producto = :codigoProducto
+                                                AND COALESCE(pa.stock, 0) > 0");
 
         $stmt->bindParam(":codigoProducto", $codigoProducto, PDO::PARAM_STR);
+        $stmt->bindParam(":id_almacen", $id_almacen, PDO::PARAM_INT);
 
         $stmt->execute();
 
@@ -677,15 +993,17 @@ class ProductosModelo
     /*===================================================================
     VERIFICAR EL STOCK DE UN PRODUCTO
     ====================================================================*/
-    static public function mdlVerificaStockProducto($codigo_producto, $cantidad_a_comprar)
+    static public function mdlVerificaStockProducto($codigo_producto, $cantidad_a_comprar, $id_almacen = 1)
     {
 
-        $stmt = Conexion::conectar()->prepare("SELECT   count(*) as existe, stock
+        $stmt = Conexion::conectar()->prepare("SELECT   count(*) as existe, COALESCE(pa.stock, 0) as stock
                                                     FROM productos p 
+                                                    left join productos_almacenes pa on pa.codigo_producto = p.codigo_producto and pa.id_almacen = :id_almacen
                                                    WHERE p.codigo_producto = :codigo_producto");
-                                                    // AND p.stock >= :cantidad_a_comprar");
+        // AND p.stock >= :cantidad_a_comprar");
 
         $stmt->bindParam(":codigo_producto", $codigo_producto, PDO::PARAM_STR);
+        $stmt->bindParam(":id_almacen", $id_almacen, PDO::PARAM_INT);
         // $stmt->bindParam(":cantidad_a_comprar", $cantidad_a_comprar, PDO::PARAM_STR);
 
         $stmt->execute();
@@ -758,14 +1076,18 @@ class ProductosModelo
         return $stmt->fetchAll();
     }
 
-    static public function mdlObtenerImpuesto($id_tipo_operacion)
+    static public function mdlObtenerImpuesto($codigo_tipo_afectacion)
     {
-        $stmt = Conexion::conectar()->prepare("select id_tipo_operacion, impuesto
-                                                from impuestos 
-                                                where estado = 1
-                                                and id_tipo_operacion = :id_tipo_operacion");
+        // $stmt = Conexion::conectar()->prepare("select id_tipo_operacion, impuesto
+        //                                         from impuestos 
+        //                                         where estado = 1
+        //                                         and id_tipo_operacion = :id_tipo_operacion");
 
-        $stmt->bindParam(":id_tipo_operacion", $id_tipo_operacion, PDO::PARAM_STR);
+         $stmt = Conexion::conectar()->prepare("SELECT  porcentaje_impuesto as impuesto
+                                                FROM tipo_afectacion_igv 
+                                                WHERE codigo = :codigo_tipo_afectacion");
+
+        $stmt->bindParam(":codigo_tipo_afectacion", $codigo_tipo_afectacion, PDO::PARAM_STR);
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_NAMED);
     }
@@ -781,5 +1103,26 @@ class ProductosModelo
 
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_NAMED);
+    }
+
+    static public function mdlListarCargasMasivas()
+    {
+
+        $stmt = Conexion::conectar()->prepare("SELECT '' as detalles,
+                                                    id, 
+                                                    categorias_insertadas, 
+                                                    categorias_excel, 
+                                                    productos_insertados, 
+                                                    productos_excel, 
+                                                    unidades_medida_insertadas, 
+                                                    unidades_medida_excel,
+                                                    estado_carga,
+                                                    fecha_carga
+                                                FROM historico_cargas_masivas
+                                                ORDER BY id DESC");
+
+        $stmt->execute();
+
+        return $stmt->fetchAll();
     }
 }

@@ -11,6 +11,12 @@ if (isset($_POST["accion"])) {
 
     switch ($_POST["accion"]) {
 
+        case 'listar_clientes_pos':
+            $term = $_POST['term'] ?? '';
+            $response = ClientesModelo::mdlListarClientesPos($term);
+            echo json_encode($response, JSON_UNESCAPED_UNICODE);
+            break;
+
         case 'obtener_clientes':
 
             $response = ClientesModelo::mdlObtenerClientes($_POST);
@@ -45,4 +51,13 @@ if (isset($_POST["accion"])) {
 
             break;
     }
+}
+
+
+
+if (isset($_GET["term"])) {
+
+    $response = ClientesModelo::mdlAutocompleteClientes($_GET["term"]);
+
+    echo json_encode($response);
 }

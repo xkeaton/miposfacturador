@@ -17,9 +17,22 @@ if (isset($_POST["accion"])) {
             echo json_encode($response, JSON_UNESCAPED_UNICODE);
             break;
 
+        case 'obtener_porcentaje_impuesto':
+
+            $response = TipoAfectacionIgvModelo::mdlObtenerPorcentajeImpuesto($_POST['codigo_afectacion']);
+            echo json_encode($response, JSON_UNESCAPED_UNICODE);
+            break;
+
+
         case 'validar_codigo_tipo_afectacion':
 
             $response = TipoAfectacionIgvModelo::mdlValidarCodigoAfectacion($_POST['codigo_tipo_afectacion']);
+            echo json_encode($response, JSON_UNESCAPED_UNICODE);
+            break;
+
+        case 'eliminar_tipo_afectacion':
+
+            $response = TipoAfectacionIgvModelo::mdlEliminarTipoAfectacion($_POST['id_tipo_afectacion']);
             echo json_encode($response, JSON_UNESCAPED_UNICODE);
             break;
 

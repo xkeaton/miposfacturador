@@ -52,6 +52,8 @@ if (isset($_POST["accion"])) {
             $formulario_compra = [];
             parse_str($_POST['datos_compra'], $formulario_compra);
 
+
+
             //DETALLA DE LA  COMPRA
             $detalle_productos = json_decode($_POST["arr_detalle_productos"]);
 
@@ -65,6 +67,31 @@ if (isset($_POST["accion"])) {
                 $_POST["total_descuento"],
                 $_POST["total"]
             );
+
+            if ($response["id_compra"] > 0) {
+
+                $cuotas = array();
+
+                if ($formulario_compra['forma_pago'] == '2') {
+
+                    if (isset($_POST["arr_cronograma"])) {
+                        $cronograma = json_decode($_POST["arr_cronograma"]);
+                    }
+
+                    for ($i = 0; $i < count($cronograma); $i++) {
+
+                        $cuotas[] = array(
+                            "cuota" => $cronograma[$i]->cuota,
+                            "importe" => round($cronograma[$i]->importe, 2),
+                            "vencimiento" => $cronograma[$i]->fecha_vencimiento
+                        );
+                    }
+
+                    $insert_cuotas = ComprasModelo::mdlInsertarCuotas($response["id_compra"], $cuotas);
+                }
+            }
+
+
             echo json_encode($response);
 
             break;
@@ -105,6 +132,29 @@ if (isset($_POST["accion"])) {
             echo json_encode($response);
             break;
 
+        case "compras_x_pagar":
+
+            $response = ComprasModelo::mdlObtenerComprasPorPagar($_POST);
+
+            echo json_encode($response, JSON_UNESCAPED_UNICODE);
+
+            break;
+
+        case "obtener_cuotas_x_id_compra":
+
+            $response = ComprasModelo::mdlObtenerCuotasPorIdCompra($_POST["id_compra"]);
+
+            echo json_encode($response, JSON_UNESCAPED_UNICODE);
+
+            break;
+
+        case "pagar_cuota":
+
+            $response = ComprasModelo::mdlPagarCuotas($_POST["id_compra"], $_POST["monto_a_pagar"]);
+
+            echo json_encode($response, JSON_UNESCAPED_UNICODE);
+
+            break;
         default:
             # code...
             break;
@@ -135,7 +185,7 @@ if (isset($_GET["accion"])) {
             // <h2 style="text-align:center;">REGISTRO DE COMPRAS</h2>
             // <br/>
             // <br/>
-            
+
             // <div style="font-size:20px; font-weight:bold; padding-bottom: 5px">Datos de Proveedor</div>
             // <br/>
 
@@ -145,10 +195,10 @@ if (isset($_GET["accion"])) {
             // <div style="padding: 0px; margin-top: 2px;">Telefono: </div><br/>
             // ';
 
-            
+
 
             $dompdf = new Dompdf();
-        
+
 
             $dompdf->loadHtml($html);
             $dompdf->setpaper('A4');

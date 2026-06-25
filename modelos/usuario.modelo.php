@@ -174,7 +174,7 @@ class UsuarioModelo
         }
 
         $stmt = Conexion::conectar()->prepare(" SELECT 1
-                                                FROM USUARIOS usu 
+                                                FROM usuarios usu 
                                                 inner join perfiles p on usu.id_perfil_usuario = p.id_perfil
                                                 inner join cajas c on c.id = usu.id_caja");
 
@@ -200,19 +200,20 @@ class UsuarioModelo
         try {
 
             $password = crypt($usuario['password'], '$2a$07$azybxcags23425sdg23sdfhsd$');
-            $stmt = $dbh->prepare("INSERT INTO usuarios(nombre_usuario, apellido_usuario, usuario, clave, id_perfil_usuario, id_caja, estado)
-                                    VALUES(UPPER(?),UPPER(?),?,?,?,?,?)");
+            $stmt = $dbh->prepare("INSERT INTO usuarios(nombre_usuario, apellido_usuario, usuario, clave, id_perfil_usuario, id_caja,estado)
+                                    VALUES(:p_nombre_usuario, :p_apellido_usuario, :p_usuario, :p_clave, :p_id_perfil_usuario, :p_id_caja, :p_estado)");
             $dbh->beginTransaction();
             $stmt->execute(array(
-                $usuario['nombres'],
-                $usuario['apellidos'],
-                $usuario['usuario'],
-                $password,
-                $usuario['perfil'],
-                $usuario['caja'],
-                $usuario['estado']
+                ':p_nombre_usuario' => $usuario['nombres'],
+                ':p_apellido_usuario' => $usuario['apellidos'],
+                ':p_usuario' => $usuario['usuario'],
+                ':p_clave' => $password,
+                ':p_id_perfil_usuario' => $usuario['perfil'],
+                ':p_id_caja' => $usuario['caja'],
+                ':p_estado' => $usuario['estado']
             ));
             $dbh->commit();
+
 
             $respuesta['tipo_msj'] = 'success';
             $respuesta['msj'] = 'Se registró el usuario correctamente';
@@ -304,7 +305,7 @@ class UsuarioModelo
         return $respuesta;
     }
 
-    static public function mdlReestablecerPassword($usuario, $password) 
+    static public function mdlReestablecerPassword($usuario, $password)
     {
 
         $dbh = Conexion::conectar();
@@ -332,5 +333,38 @@ class UsuarioModelo
         }
 
         return $respuesta;
+    }
+
+    static public function mdlObtenerEmpresaPrincipal()
+    {
+
+        $stmt = Conexion::conectar()->prepare("SELECT id_empresa,
+                                                        genera_fact_electronica,
+                                                        razon_social,
+                                                        nombre_comercial,
+                                                        id_tipo_documento,
+                                                        ruc,
+                                                        direccion,
+                                                        simbolo_moneda,
+                                                        email,
+                                                        telefono,
+                                                        provincia,
+                                                        departamento,
+                                                        distrito,
+                                                        ubigeo,
+                                                        certificado_digital,
+                                                        clave_certificado,
+                                                        usuario_sol,
+                                                        clave_sol,
+                                                        es_principal,
+                                                        fact_bol_defecto,
+                                                        logo,
+                                                        bbva_cci,
+                                                        bcp_cci,
+                                                        yape,
+                                                        estado
+                                                FROM empresas");
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_NAMED);
     }
 }
