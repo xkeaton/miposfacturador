@@ -12,7 +12,7 @@ $datosEmpresa = UsuarioModelo::mdlObtenerEmpresaPrincipal();
             <a class="nav-link" data-widget="pushmenu" href="./" role="button"><i class="fas fa-bars"></i></a>
         </li>
         <li class="nav-item">
-            <a class="nav-link fs-4 fw-bold text-success" href="https://bit.ly/contactametutorialesphperu" target="_blank">
+            <a class="nav-link fs-4 fw-bold text-success" href="https://api.whatsapp.com/send?phone=51918604494" target="_blank">
                 <i class="fab fa-whatsapp fs-4 fw-bold"></i>
                 CONTÁCTAME
             </a>
