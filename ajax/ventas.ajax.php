@@ -2107,7 +2107,7 @@ if (isset($_GET["accion"])) {
             $pdf->Cell(60, 10, 'TUTORIALES PHPERU', 0, 0, 'C');
 
             //LOGO
-            $pdf->Image('../vistas/assets/dist/img/logos_empresas/' . $venta["logo"] ?? 'mi_logo_tutorialesphperu.png', 30, 18, 20, 20);
+            $pdf->Image('../vistas/assets/dist/img/logos_empresas/' . ($venta["logo"] ?? 'mi_logo_tutorialesphperu.png'), 30, 18, 20, 20);
 
             $pdf->Ln(25);
 
@@ -2357,7 +2357,7 @@ if (isset($_GET["accion"])) {
             $pdf->Cell(60, 10, $venta["nombre_comercial"], 0, 0, 'C');
 
             //LOGO
-            $pdf->Image('../vistas/assets/dist/img/logos_empresas/' . $venta["logo"] ?? 'mi_logo_tutorialesphperu.png', 30, 18, 20, 20);
+            $pdf->Image('../vistas/assets/dist/img/logos_empresas/' . ($venta["logo"] ?? 'mi_logo_tutorialesphperu.png'), 30, 18, 20, 20);
 
             $pdf->Ln(25);
 
