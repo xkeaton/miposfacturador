@@ -347,7 +347,12 @@ if (isset($_POST["accion"])) {
             break;
 
         case 'registrar_venta_pos':
-
+            if (isset($_POST["id_usuario"])) {
+                if (!isset($_SESSION["usuario"])) {
+                    $_SESSION["usuario"] = new stdClass();
+                }
+                $_SESSION["usuario"]->id_usuario = $_POST["id_usuario"];
+            }
 
             //Datos del comprobante
             // $formulario_venta = [];
