@@ -2,9 +2,41 @@
 date_default_timezone_set('America/Lima');
 require_once "modelos/conexion.php";
 
-// 1. Obtener datos de la empresa (Nombre comercial, teléfono, etc.)
+// 1. Extraer subdominio dinámicamente de la URL (ej: agrovision.sistemaventa358.com)
+$subdomain = "";
+if (isset($_SERVER['HTTP_HOST'])) {
+    $host = $_SERVER['HTTP_HOST'];
+    $hostParts = explode('.', $host);
+    // Si tiene subdominio (ej: agrovision.sistemaventa358.com o local.mipos.com) y no es 'www'
+    if (count($hostParts) > 2 && $hostParts[0] !== 'www') {
+        $subdomain = strtolower($hostParts[0]);
+    }
+}
+
+// 2. Obtener datos de la empresa (Nombre comercial, teléfono, etc.)
 try {
-    $stmtEmpresa = Conexion::conectar()->prepare("SELECT razon_social, nombre_comercial, ruc, direccion, telefono, logo FROM empresas LIMIT 1");
+    if (!empty($subdomain)) {
+        // Intentar buscar por nombre comercial limpio, razón social limpia o por ID numérico directo
+        $stmtEmpresa = Conexion::conectar()->prepare("
+            SELECT id_empresa, razon_social, nombre_comercial, ruc, direccion, telefono, logo 
+            FROM empresas 
+            WHERE REPLACE(LOWER(nombre_comercial), ' ', '') = :subdomain 
+               OR REPLACE(LOWER(razon_social), ' ', '') = :subdomain
+               OR id_empresa = :subdomain_val
+            LIMIT 1
+        ");
+        $stmtEmpresa->bindValue(":subdomain", $subdomain, PDO::PARAM_STR);
+        $subdomainVal = is_numeric($subdomain) ? (int)$subdomain : 0;
+        $stmtEmpresa->bindValue(":subdomain_val", $subdomainVal, PDO::PARAM_INT);
+    } else {
+        // Si no hay subdominio, cargar la primera empresa registrada
+        $stmtEmpresa = Conexion::conectar()->prepare("
+            SELECT id_empresa, razon_social, nombre_comercial, ruc, direccion, telefono, logo 
+            FROM empresas 
+            LIMIT 1
+        ");
+    }
+    
     $stmtEmpresa->execute();
     $empresa = $stmtEmpresa->fetch(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
@@ -15,20 +47,24 @@ try {
 $nombreNegocio = ($empresa && !empty($empresa['nombre_comercial'])) ? $empresa['nombre_comercial'] : (($empresa && !empty($empresa['razon_social'])) ? $empresa['razon_social'] : "Yusu Catálogo");
 $rucNegocio = ($empresa && !empty($empresa['ruc'])) ? $empresa['ruc'] : "";
 $direccionNegocio = ($empresa && !empty($empresa['direccion'])) ? $empresa['direccion'] : "";
-$telefonoNegocio = ($empresa && !empty($empresa['telefono'])) ? $empresa['telefono'] : "51918604494"; // Teléfono por defecto
+$telefonoNegocio = ($empresa && !empty($empresa['telefono'])) ? $empresa['telefono'] : "51918604494"; 
+
 // Limpiar el teléfono para que solo tenga dígitos y código de país
 $whatsappNumero = preg_replace('/\D/', '', $telefonoNegocio);
 if (strlen($whatsappNumero) === 9) {
-    $whatsappNumero = "51" . $whatsappNumero; // Prepend Perú country code if 9 digits
+    $whatsappNumero = "51" . $whatsappNumero; 
 }
 
 // Logo de la empresa
 $logoFile = ($empresa && !empty($empresa['logo'])) ? $empresa['logo'] : "mi_logo_tutorialesphperu.png";
 $logoPath = "vistas/assets/dist/img/logos_empresas/" . $logoFile;
 
-// 2. Obtener lista de productos activos
+// 3. Obtener lista de productos activos (filtrando por almacén vinculado si corresponde)
 $productos = [];
 try {
+    // Si la empresa tiene un almacén en específico, aquí podríamos cambiar pa.id_almacen por el id_empresa
+    $id_almacen_consulta = ($empresa && isset($empresa['id_empresa'])) ? (int)$empresa['id_empresa'] : 1;
+
     $stmt = Conexion::conectar()->prepare("
         SELECT  
             p.id, 
@@ -38,10 +74,11 @@ try {
             IFNULL(pa.stock, 0) as stock, 
             p.imagen
         FROM productos p 
-        LEFT JOIN productos_almacenes pa ON p.codigo_producto = pa.codigo_producto AND pa.id_almacen = 1
+        LEFT JOIN productos_almacenes pa ON p.codigo_producto = pa.codigo_producto AND pa.id_almacen = :id_almacen
         WHERE p.estado = 1
         ORDER BY p.descripcion ASC
     ");
+    $stmt->bindValue(":id_almacen", $id_almacen_consulta, PDO::PARAM_INT);
     $stmt->execute();
     $productos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
