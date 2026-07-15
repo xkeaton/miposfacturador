@@ -3,5 +3,7 @@ Options -MultiViews
 
 RewriteEngine On
 
+RewriteRule ^catalogo$ catalogo.php [QSA,L]
+
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteRule ^ index.php [QSA,L]
