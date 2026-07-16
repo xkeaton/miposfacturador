@@ -4,6 +4,76 @@ $menuUsuario = UsuarioModelo::mdlObtenerMenuUsuario($_SESSION["usuario"]->id_usu
 $datosEmpresa = UsuarioModelo::mdlObtenerEmpresaPrincipal();
 ?>
 
+<!-- Estilos personalizados para transformar el menú lateral en verde esmeralda premium -->
+<style>
+    /* Contenedor principal de la barra lateral */
+    .main-sidebar {
+        background: linear-gradient(180deg, #065f46 0%, #022c22 100%) !important;
+        border-right: none !important;
+        box-shadow: 4px 0 10px rgba(0,0,0,0.05) !important;
+    }
+    
+    /* Bordes inferiores del logo y del panel de usuario */
+    .brand-link, .user-panel {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    }
+    
+    /* Nombre comercial */
+    .brand-link .brand-text {
+        color: #ffffff !important;
+        font-weight: 800 !important;
+        letter-spacing: -0.5px;
+    }
+    
+    /* Enlaces del menú (General y submenús) */
+    .sidebar-dark-primary .nav-sidebar > .nav-item > .nav-link,
+    .sidebar-dark-primary .nav-treeview > .nav-item > .nav-link {
+        color: rgba(209, 250, 229, 0.8) !important;
+        font-family: 'Inter', sans-serif !important;
+        font-size: 13.5px !important;
+        font-weight: 500 !important;
+        transition: all 0.2s ease;
+        border-radius: 8px !important;
+        margin: 2px 8px !important;
+        padding: 8px 12px !important;
+    }
+    
+    /* Iconos del menú */
+    .sidebar-dark-primary .nav-sidebar > .nav-item > .nav-link i,
+    .sidebar-dark-primary .nav-treeview > .nav-item > .nav-link i {
+        color: #a7f3d0 !important;
+        font-size: 15px !important;
+    }
+    
+    /* Hover en los ítems */
+    .sidebar-dark-primary .nav-sidebar > .nav-item > .nav-link:hover,
+    .sidebar-dark-primary .nav-treeview > .nav-item > .nav-link:hover {
+        background-color: rgba(255, 255, 255, 0.08) !important;
+        color: #ffffff !important;
+    }
+    
+    /* Ítem activo */
+    .sidebar-dark-primary .nav-sidebar > .nav-item > .nav-link.active,
+    .sidebar-dark-primary .nav-treeview > .nav-item > .nav-link.active {
+        background-color: rgba(255, 255, 255, 0.15) !important;
+        color: #ffffff !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    /* Fondo del árbol de submenús */
+    .nav-treeview {
+        background-color: rgba(0, 0, 0, 0.15) !important;
+        border-radius: 8px;
+        margin: 2px 12px !important;
+        padding: 4px 0;
+    }
+    
+    /* Flecha del árbol */
+    .nav-sidebar .nav-item > .nav-link > .right {
+        color: rgba(209, 250, 229, 0.6) !important;
+    }
+</style>
+
 <!-- Navbar -->
 <nav class="main-header navbar navbar-expand navbar-white navbar-light">
     <!-- Left navbar links -->
